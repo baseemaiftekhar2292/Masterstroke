@@ -1,0 +1,93 @@
+export interface Chapter {
+  id: string;
+  title: string;
+  script: string;
+}
+
+export interface Subject {
+  name: string;
+  chapters: Chapter[];
+}
+
+export const SYLLABUS_DATA: Record<string, Subject> = {
+  physics: {
+    name: "Physics",
+    chapters: [
+      {
+        id: "phy-1",
+        title: "Chapter 1: Vectors & Physical Quantities",
+        script: "Welcome to Physics Chapter 1. Today we learn about scalars, vectors, and fundamental physical quantities."
+      },
+      {
+        id: "phy-2",
+        title: "Chapter 2: Kinematics & Motion",
+        script: "In Chapter 2, we discuss distance, displacement, speed, velocity, and equations of motion."
+      },
+      {
+        id: "phy-3",
+        title: "Chapter 3: Laws of Motion",
+        script: "Chapter 3 covers Newton's three laws of motion, force concepts, and momentum conservation."
+      }
+    ]
+  },
+  chemistry: {
+    name: "Chemistry",
+    chapters: [
+      {
+        id: "chem-1",
+        title: "Chapter 1: Some Basic Concepts of Chemistry",
+        script: "Welcome to Chemistry Chapter 1. We cover mole concept, molar mass, and stoichiometry."
+      },
+      {
+        id: "chem-2",
+        title: "Chapter 2: Structure of Atom",
+        script: "In Chapter 2, we explore subatomic particles, Bohr's atomic model, and quantum mechanics."
+      }
+    ]
+  },
+  botany: {
+    name: "Botany",
+    chapters: [
+      {
+        id: "bot-1",
+        title: "Chapter 1: Cell - The Unit of Life",
+        script: "Welcome to Botany. Today we study cell structure, organelles, prokaryotic and eukaryotic cells."
+      },
+      {
+        id: "bot-2",
+        title: "Chapter 2: Plant Kingdom",
+        script: "In Chapter 2, we classify algae, bryophytes, pteridophytes, gymnosperms, and angiosperms."
+      }
+    ]
+  },
+  zoology: {
+    name: "Zoology",
+    chapters: [
+      {
+        id: "zoo-1",
+        title: "Chapter 1: Animal Kingdom",
+        script: "Welcome to Zoology. We learn about animal classification from Porifera to Mammalia."
+      },
+      {
+        id: "zoo-2",
+        title: "Chapter 2: Human Reproduction",
+        script: "In Chapter 2, we study male and female reproductive systems and gametogenesis."
+      }
+    ]
+  },
+  maths: {
+    name: "Mathematics",
+    chapters: [
+      {
+        id: "math-1",
+        title: "Chapter 1: Sets and Functions",
+        script: "Welcome to Mathematics Chapter 1. We explore set theory, relations, and types of functions."
+      },
+      {
+        id: "math-2",
+        title: "Chapter 2: Calculus & Integration",
+        script: "In Chapter 2, we learn limits, derivatives, and fundamentals of indefinite integrals."
+      }
+    ]
+  }
+};
