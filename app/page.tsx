@@ -2,316 +2,319 @@
 
 import { useState, useEffect } from 'react';
 
-interface QuizQuestion {
-  q: string;
-  options: string[];
-  ans: number;
-  exp: string;
-}
-
-interface FormulaItem {
-  title: string;
-  formula: string;
-}
-
-interface Teacher {
+interface Mentor {
   id: string;
   name: string;
   role: string;
   subject: string;
   topic: string;
-  avatar: string;
-  expression: string;
-  badge: string;
-  intellectualScript: string;
+  avatarImg: string;
+  videoUrl: string;
+  welcomeMessage: string;
+  defaultTranscript: string;
   notes: string;
-  formulas: FormulaItem[];
-  quiz: QuizQuestion[];
+  formulas: { title: string; formula: string }[];
 }
 
-const STREAM_TEACHERS: Record<'jee' | 'neet', Teacher[]> = {
-  jee: [
-    {
-      id: 'jee-vikram',
-      name: 'Dr. Vikram Sharma',
-      role: 'Senior Physics Faculty (Ex-IITian)',
-      subject: 'Physics',
-      topic: 'Rotational Dynamics & Torque',
-      avatar: '👨‍🏫',
-      expression: '🧠 Analytical & Focused',
-      badge: 'IITian Mentor',
-      intellectualScript: 'Greetings aspirants! Torque is rotational force: τ = r × F. Notice how conservation of angular momentum governs rolling without slipping.',
-      notes: 'Center of Mass, Moment of Inertia (I = ∑mr²), Torque τ = r × F, Pure Rolling (v = ωR).',
-      formulas: [
-        { title: 'Torque Formula', formula: 'τ = r × F = r F sin(θ)' },
-        { title: 'Moment of Inertia (Ring)', formula: 'I = M R²' },
-        { title: 'Angular Momentum', formula: 'L = I × ω' }
-      ],
-      quiz: [
-        {
-          q: "A wheel of radius R rolls without slipping. The velocity of the point touching the ground is:",
-          options: ["Zero", "v", "2v", "v/2"],
-          ans: 0,
-          exp: "In pure rolling, the contact point is instantaneously at rest relative to the surface."
-        }
-      ]
-    }
-  ],
-  neet: [
-    {
-      id: 'neet-ananya',
-      name: 'Ananya Roy',
-      role: 'Organic & Physical Chem Lead',
-      subject: 'Chemistry',
-      topic: 'Biomolecules & Reaction Kinetics',
-      avatar: '👩‍🔬',
-      expression: '🔬 Deep Analysis',
-      badge: 'NEET AIR Specialist',
-      intellectualScript: 'Hello future doctors! In zero-order reactions, rate is independent of reactant concentration. Let us solve these high-yield NEET numericals.',
-      notes: 'Carbohydrate classification, Amino acid zwitterions, Activation Energy as thermodynamic barrier.',
-      formulas: [
-        { title: 'Zero Order Half Life', formula: 't_1/2 = [A]_0 / (2k)' },
-        { title: 'First Order Rate Constant', formula: 'k = (2.303 / t) log([A]_0 / [A])' }
-      ],
-      quiz: [
-        {
-          q: "The unit of rate constant for a second-order reaction is:",
-          options: ["s⁻¹", "mol L⁻¹ s⁻¹", "L mol⁻¹ s⁻¹", "L² mol⁻² s⁻¹"],
-          ans: 2,
-          exp: "For nth order, unit is (mol/L)^(1-n) s⁻¹. For n=2, it becomes L mol⁻¹ s⁻¹."
-        }
-      ]
-    }
-  ]
-};
+const SUBJECT_MENTORS: Mentor[] = [
+  {
+    id: 'kabir',
+    name: 'Kabir Sir',
+    role: 'Concept & Visualization Specialist',
+    subject: 'Physics',
+    topic: 'Rotational Dynamics & Torque',
+    avatarImg: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
+    videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    welcomeMessage: '"Let\'s make rotational dynamics simple."',
+    defaultTranscript: 'Kabir Sir: Torque is rotational force (τ = r × F). Ask me any doubt from this video lecture!',
+    notes: 'Center of Mass, Moment of Inertia (I = ∑mr²), Torque τ = r × F, Pure Rolling (v = ωR).',
+    formulas: [
+      { title: 'Torque Formula', formula: 'τ = r × F = r F sin(θ)' },
+      { title: 'Moment of Inertia (Ring)', formula: 'I = M R²' }
+    ]
+  },
+  {
+    id: 'ananya',
+    name: 'Ananya Ma\'am',
+    role: 'Reaction Kinetics & Organic Lead',
+    subject: 'Chemistry',
+    topic: 'Biomolecules & Chemical Kinetics',
+    avatarImg: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
+    videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    welcomeMessage: '"Organic Chemistry is logical, not memory work."',
+    defaultTranscript: 'Ananya Ma\'am: In zero-order reactions, the rate is independent of reactant concentration.',
+    notes: 'Carbohydrate classification, Amino acid zwitterions, Activation Energy as thermodynamic barrier.',
+    formulas: [
+      { title: 'Zero Order Half Life', formula: 't_1/2 = [A]_0 / (2k)' },
+      { title: 'First Order Rate Constant', formula: 'k = (2.303 / t) log([A]_0 / [A])' }
+    ]
+  },
+  {
+    id: 'meenakshi',
+    name: 'Dr. Meenakshi',
+    role: 'Genetics & Plant Physiology Specialist',
+    subject: 'Botany',
+    topic: 'Photosynthesis & Respiration',
+    avatarImg: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=800&q=80',
+    videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    welcomeMessage: '"Master plant processes visually."',
+    defaultTranscript: 'Dr. Meenakshi: Light reactions produce ATP and NADPH in the thylakoid membrane.',
+    notes: 'Calvin cycle steps, Z-scheme electron transport, C4 pathway adaptation.',
+    formulas: [
+      { title: 'Overall Reaction', formula: '6CO₂ + 12H₂O + Light → C₆H₁₂O₆ + 6O₂ + 6H₂O' }
+    ]
+  },
+  {
+    id: 'vikram',
+    name: 'Dr. Vikram',
+    role: 'Human Anatomy & Zoology Lead',
+    subject: 'Zoology',
+    topic: 'Neural Control & Coordination',
+    avatarImg: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
+    videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    welcomeMessage: '"High-yield NEET diagrams simplified."',
+    defaultTranscript: 'Dr. Vikram: Action potential causes depolarization of axon membrane via Na+ channels.',
+    notes: 'Synaptic transmission, Reflex arc components, Brain lobe functions.',
+    formulas: [
+      { title: 'Resting Potential', formula: '-70 mV (Inside negative)' }
+    ]
+  },
+  {
+    id: 'aman',
+    name: 'Aman Sir',
+    role: 'Calculus & Vectors Specialist',
+    subject: 'Maths',
+    topic: 'Definite Integration & Vectors',
+    avatarImg: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80',
+    videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    welcomeMessage: '"Calculus solved with speed & precision."',
+    defaultTranscript: 'Aman Sir: Apply integration by parts or properties of definite integrals directly.',
+    notes: 'Fundamental theorem of calculus, Vector dot and cross product properties.',
+    formulas: [
+      { title: 'Integration by Parts', formula: '∫ u dv = uv - ∫ v du' }
+    ]
+  }
+];
 
 export default function Home() {
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [userSubscription, setUserSubscription] = useState<'jee' | 'neet' | null>('jee');
-  const [activeStream, setActiveStream] = useState<'jee' | 'neet'>('jee');
-  const [activeTeacher, setActiveTeacher] = useState<Teacher>(STREAM_TEACHERS.jee[0]);
-  const [currentExpression, setCurrentExpression] = useState('💬 Active');
+  const [activeSubject, setActiveSubject] = useState('Physics');
+  const [activeMentor, setActiveMentor] = useState<Mentor>(SUBJECT_MENTORS[0]);
+  const [activeLang, setActiveLang] = useState<'Hinglish' | 'Hindi' | 'Marathi'>('Hinglish');
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [answers, setAnswers] = useState<number[]>([]);
-  const [couponCode, setCouponCode] = useState('');
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [userDoubt, setUserDoubt] = useState('');
+  const [activeTab, setActiveTab] = useState('Tutor');
 
-  const isLocked = userSubscription !== null && userSubscription !== activeStream;
-
-  const handleStreamChange = (stream: 'jee' | 'neet') => {
-    setActiveStream(stream);
-    setActiveTeacher(STREAM_TEACHERS[stream][0]);
-    setAnswers([]);
+  const handleSubjectChange = (subjectName: string) => {
+    setActiveSubject(subjectName);
+    const found = SUBJECT_MENTORS.find(m => m.subject === subjectName) || SUBJECT_MENTORS[0];
+    setActiveMentor(found);
     setAudioUrl(null);
     setIsSpeaking(false);
+    setUserDoubt('');
   };
 
-  useEffect(() => {
-    if (isSpeaking) {
-      const interval = setInterval(() => {
-        const exprs = ['🗣️ Explaining Concept', '🔍 Deep Analysis', '💡 Solving Live'];
-        setCurrentExpression(exprs[Math.floor(Math.random() * exprs.length)]);
-      }, 1800);
-      return () => clearInterval(interval);
-    } else {
-      setCurrentExpression(activeTeacher.expression);
-    }
-  }, [isSpeaking, activeTeacher]);
-
-  const handleLiveInteraction = async (text: string) => {
+  const handleSpeechInteraction = async (queryText?: string) => {
     setLoadingAudio(true);
     setIsSpeaking(true);
-    setCurrentExpression('🧠 Generating AI Speech...');
-    
+
+    const textToSpeak = queryText || activeMentor.defaultTranscript;
+
     try {
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text: textToSpeak }),
       });
+
       if (res.ok) {
         const blob = await res.blob();
         setAudioUrl(URL.createObjectURL(blob));
-        setCurrentExpression('🗣️ Live Lecturing');
       } else {
-        alert('Vercel settings me OPENAI_API_KEY verify karein.');
+        alert('Please verify your OPENAI_API_KEY in Vercel settings.');
         setIsSpeaking(false);
       }
     } catch {
-      alert('Interaction Error.');
+      alert('Audio interaction error.');
       setIsSpeaking(false);
     }
     setLoadingAudio(false);
   };
 
   return (
-    <main className={`p-4 md:p-8 min-h-screen font-sans transition-colors duration-500 ${isDarkMode ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
-      
+    <main className="min-h-screen bg-[#0a0d18] text-white font-sans pb-24">
       <style jsx global>{`
         @media print {
           body { background: white !important; color: black !important; }
           .no-print { display: none !important; }
-          .printable-card { border: 2px solid #000 !important; background: white !important; color: black !important; box-shadow: none !important; }
         }
       `}</style>
 
-      <div className="max-w-5xl mx-auto space-y-8">
+      {/* Top Subjects Bar */}
+      <div className="flex items-center gap-3 overflow-x-auto p-4 border-b border-slate-800/80 no-scrollbar no-print">
+        {SUBJECT_MENTORS.map((m) => (
+          <button
+            key={m.subject}
+            onClick={() => handleSubjectChange(m.subject)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              activeSubject === m.subject
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20 border border-blue-400/40'
+                : 'bg-slate-900/80 text-gray-400 border border-slate-800 hover:bg-slate-800'
+            }`}
+          >
+            <img src={m.avatarImg} alt={m.subject} className="w-6 h-6 rounded-full object-cover" />
+            <span>{m.subject}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="max-w-xl mx-auto p-4 space-y-6">
         
-        {/* Top Bar */}
-        <div className="flex justify-between items-center no-print">
-          <span className={`text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full border ${isDarkMode ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' : 'bg-blue-100 text-blue-700 border-blue-300'}`}>
-            Masterstroke AI Portal
-          </span>
+        {/* Mentor Card Container */}
+        <div className="bg-[#111629] border border-slate-800 rounded-3xl p-5 shadow-2xl space-y-5">
+          
+          {/* Header Indicators */}
+          <div className="flex justify-between items-center text-xs no-print">
+            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold tracking-wider uppercase text-[10px]">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Mentor Online
+            </span>
+            
+            <button 
+              onClick={() => window.print()}
+              className="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-3 py-1 rounded-full text-[10px] font-bold"
+            >
+              📄 Printable Sheet
+            </button>
+          </div>
 
-          <button 
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold border transition ${isDarkMode ? 'bg-slate-900 border-slate-700 text-yellow-400' : 'bg-white border-slate-300 text-slate-800'}`}
-          >
-            {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-          </button>
-        </div>
+          {/* 🎥 PRE-RECORDED VIDEO LECTURE SECTION */}
+          <div className="space-y-2 no-print">
+            <p className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">
+              🎥 Chapter Lecture: {activeMentor.topic}
+            </p>
+            <div className="relative rounded-2xl overflow-hidden aspect-video border border-slate-800 bg-slate-950 shadow-xl">
+              <video controls className="w-full h-full object-cover">
+                <source src={activeMentor.videoUrl} type="video/mp4" />
+                Your browser does not support video play.
+              </video>
+            </div>
+          </div>
 
-        {/* Title */}
-        <div className="text-center space-y-2 no-print">
-          <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-500 via-teal-400 to-yellow-500 bg-clip-text text-transparent">
-            Masterstroke AI Classroom
-          </h1>
-          <p className={isDarkMode ? 'text-gray-400 text-sm' : 'text-slate-600 text-sm'}>
-            Interactive AI Mentors, Live Speech & Printable Formula Sheets
-          </p>
-        </div>
+          {/* Mentor Details */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <img src={activeMentor.avatarImg} alt={activeMentor.name} className="w-10 h-10 rounded-full object-cover border border-blue-500/40" />
+              <div>
+                <h3 className="font-bold text-base text-white">{activeMentor.name}</h3>
+                <p className="text-[11px] text-gray-400 font-mono">{activeMentor.role}</p>
+              </div>
+            </div>
+            <p className="text-sm font-semibold text-blue-300">
+              {activeMentor.welcomeMessage}
+            </p>
+          </div>
 
-        {/* Stream Selector */}
-        <div className="flex justify-center gap-4 no-print">
-          <button 
-            onClick={() => handleStreamChange('jee')}
-            className={`px-6 py-3 rounded-2xl font-extrabold text-sm border transition ${activeStream === 'jee' ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : isDarkMode ? 'bg-slate-900 border-slate-800 text-gray-400' : 'bg-white border-slate-300 text-slate-600'}`}
-          >
-            ⚡ JEE Main & Advanced {userSubscription === 'jee' && '✓'}
-          </button>
-
-          <button 
-            onClick={() => handleStreamChange('neet')}
-            className={`px-6 py-3 rounded-2xl font-extrabold text-sm border transition ${activeStream === 'neet' ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg' : isDarkMode ? 'bg-slate-900 border-slate-800 text-gray-400' : 'bg-white border-slate-300 text-slate-600'}`}
-          >
-            🩺 NEET UG Medical {userSubscription === 'neet' && '✓'} {userSubscription === 'jee' && '🔒'}
-          </button>
-        </div>
-
-        {/* Locked Screen */}
-        {isLocked ? (
-          <div className={`border rounded-3xl p-8 text-center space-y-6 shadow-2xl no-print ${isDarkMode ? 'bg-slate-900/90 border-yellow-500/30' : 'bg-white border-yellow-400'}`}>
-            <div className="text-6xl animate-bounce">🔒</div>
-            <h2 className="text-2xl font-extrabold text-yellow-500">{activeStream.toUpperCase()} Stream Access Locked</h2>
-            <div className={`p-6 rounded-2xl border border-dashed max-w-md mx-auto space-y-4 ${isDarkMode ? 'bg-slate-950 border-teal-500/50' : 'bg-slate-50 border-teal-600'}`}>
-              <span className="bg-teal-500/20 text-teal-600 text-xs font-bold px-3 py-1 rounded-full border border-teal-500/40">🎁 Discount Offer</span>
-              <p className="text-xs">Coupon Code: <b className="text-yellow-500">EXISTING250</b> (Flat ₹250 Off)</p>
-              
-              <button 
-                onClick={() => { setUserSubscription(activeStream); alert(`${activeStream.toUpperCase()} Unlocked!`); }}
-                className="w-full bg-yellow-500 text-black font-extrabold py-3 rounded-xl text-sm"
+          {/* Language Selection */}
+          <div className="flex gap-2 no-print">
+            {(['Hinglish', 'Hindi', 'Marathi'] as const).map((lang) => (
+              <button
+                key={lang}
+                onClick={() => setActiveLang(lang)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium border transition ${
+                  activeLang === lang
+                    ? 'bg-purple-600/30 text-purple-300 border-purple-500/50'
+                    : 'bg-slate-900 text-gray-400 border-slate-800 hover:bg-slate-850'
+                }`}
               >
-                Unlock {activeStream.toUpperCase()} Stream
+                {lang}
+              </button>
+            ))}
+          </div>
+
+          {/* 🎙️ LIVE AI DOUBT SOLVER INTERACTION */}
+          <div className="space-y-3 pt-2 border-t border-slate-800/80 no-print">
+            <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">
+              💬 Ask Live Doubt to {activeMentor.name}
+            </p>
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                placeholder={`Ask any doubt from ${activeMentor.subject}...`}
+                value={userDoubt}
+                onChange={(e) => setUserDoubt(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              />
+              <button
+                onClick={() => handleSpeechInteraction(userDoubt)}
+                disabled={loadingAudio}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs transition disabled:opacity-50 whitespace-nowrap border border-blue-400/30"
+              >
+                {loadingAudio ? 'Connecting...' : '🎙️ Ask Live'}
               </button>
             </div>
           </div>
-        ) : (
-          /* Original Main Studio View */
-          <div className={`printable-card border rounded-3xl p-6 md:p-8 shadow-2xl space-y-8 ${isDarkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200'}`}>
-            
-            {/* Faculty Header */}
-            <div className="flex flex-wrap items-center justify-between border-b pb-5 gap-4 border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-4">
-                <div className={`text-6xl p-3 rounded-2xl border ${isSpeaking ? 'animate-bounce border-yellow-400' : 'border-slate-700'} ${isDarkMode ? 'bg-slate-950' : 'bg-slate-100'}`}>
-                  {activeTeacher.avatar}
-                </div>
-                <div>
-                  <h3 className={`font-extrabold text-xl ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{activeTeacher.name}</h3>
-                  <p className="text-xs text-yellow-500 font-mono mt-0.5">Topic: {activeTeacher.topic}</p>
-                </div>
-              </div>
 
-              <div className="flex flex-wrap gap-2 no-print">
-                <button 
-                  onClick={() => window.print()}
-                  className="bg-amber-500 hover:bg-amber-600 text-black font-extrabold px-4 py-2.5 rounded-xl text-xs border border-yellow-400"
-                >
-                  📄 Download Formulas (PDF)
-                </button>
-
-                <button 
-                  onClick={() => handleLiveInteraction(activeTeacher.intellectualScript)}
-                  disabled={loadingAudio}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs transition disabled:opacity-50"
-                >
-                  {loadingAudio ? '🧠 Thinking...' : '🎙️ Live Audio'}
-                </button>
-              </div>
+          {/* Audio Response Output */}
+          {audioUrl && (
+            <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
+              <audio controls autoPlay onEnded={() => setIsSpeaking(false)} className="w-full h-8">
+                <source src={audioUrl} type="audio/mpeg" />
+              </audio>
             </div>
+          )}
 
-            {/* Audio Stream Player */}
-            {audioUrl && (
-              <div className={`p-4 rounded-2xl border space-y-2 no-print ${isDarkMode ? 'bg-slate-950 border-teal-500/40' : 'bg-teal-50 border-teal-300'}`}>
-                <p className="text-xs text-teal-500 font-mono flex justify-between">
-                  <span>🔊 Speech Active</span>
-                  <span className="animate-pulse">● Playing...</span>
-                </p>
-                <audio controls autoPlay onEnded={() => setIsSpeaking(false)} className="w-full h-9">
-                  <source src={audioUrl} type="audio/mpeg" />
-                </audio>
-              </div>
-            )}
-
-            {/* Notes Box */}
-            <div className={`p-5 rounded-2xl border space-y-2 ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-              <h4 className="text-xs font-bold text-yellow-500 uppercase tracking-wider">Authentic Revision Notes:</h4>
-              <p className={`text-xs font-mono leading-relaxed ${isDarkMode ? 'text-gray-300' : 'text-slate-700'}`}>{activeTeacher.notes}</p>
+          {/* Live Transcript Container */}
+          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-2">
+            <div className="flex justify-between items-center text-[10px] text-gray-400 font-mono tracking-wider uppercase">
+              <span>LIVE TRANSCRIPT</span>
+              <span className="text-purple-400">{activeLang}</span>
             </div>
+            <p className="text-xs text-gray-200 leading-relaxed font-sans">
+              {userDoubt ? `${activeMentor.name}: "${userDoubt}" - Let's solve this step-by-step using NCERT rules.` : activeMentor.defaultTranscript}
+            </p>
+          </div>
 
-            {/* Formula Bank */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold text-teal-500 uppercase tracking-wider">
-                📐 Official Formula Bank (Printable)
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {activeTeacher.formulas.map((f, fIdx) => (
-                  <div key={fIdx} className={`p-4 rounded-xl border space-y-1 ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
-                    <p className="text-xs font-semibold text-yellow-500">{f.title}</p>
-                    <p className={`text-sm font-mono font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{f.formula}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Assessment Quiz */}
-            <div className="space-y-6 pt-2 border-t border-slate-200 dark:border-slate-800 no-print">
-              <h4 className="font-bold text-lg text-yellow-500">🎯 Interactive Quiz</h4>
-
-              {activeTeacher.quiz.map((q, idx) => (
-                <div key={idx} className={`p-5 rounded-2xl border space-y-4 ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <p className="font-semibold text-sm">Q{idx + 1}. {q.q}</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {q.options.map((opt, optIdx) => (
-                      <button
-                        key={optIdx}
-                        onClick={() => {
-                          const newAns = [...answers];
-                          newAns[idx] = optIdx;
-                          setAnswers(newAns);
-                        }}
-                        className={`text-left p-3.5 rounded-xl text-xs font-medium border transition ${answers[idx] === optIdx ? 'bg-blue-600 border-blue-400 text-white' : isDarkMode ? 'bg-slate-900 border-slate-800 text-gray-300' : 'bg-white border-slate-300 text-slate-700'}`}
-                      >
-                        {optIdx + 1}) {opt}
-                      </button>
-                    ))}
-                  </div>
+          {/* High-Yield Notes & Formula Bank */}
+          <div className="space-y-3 pt-2 border-t border-slate-800/80">
+            <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
+              📐 High-Yield Formula Bank ({activeMentor.subject})
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              {activeMentor.formulas.map((f, i) => (
+                <div key={i} className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+                  <p className="text-amber-400 font-semibold">{f.title}</p>
+                  <p className="font-mono text-white font-bold">{f.formula}</p>
                 </div>
               ))}
             </div>
-
           </div>
-        )}
+
+        </div>
+      </div>
+
+      {/* Bottom Navigation Bar */}
+      <div className="fixed bottom-0 inset-x-0 bg-[#0d1120]/95 backdrop-blur-md border-t border-slate-800/80 px-4 py-2.5 flex justify-around items-center text-gray-400 text-[10px] z-50 no-print">
+        {[
+          { name: 'Home', icon: '🏠' },
+          { name: 'Lectures', icon: '📖' },
+          { name: 'Monthly Test', icon: '⚡' },
+          { name: 'Podcast Mode', icon: '🔊' },
+          { name: 'Tutor', icon: '🧬' },
+          { name: 'Profile', icon: '👤' }
+        ].map((item) => (
+          <button
+            key={item.name}
+            onClick={() => setActiveTab(item.name)}
+            className={`flex flex-col items-center gap-1 transition ${
+              activeTab === item.name ? 'text-blue-400 font-bold scale-105' : 'hover:text-gray-200'
+            }`}
+          >
+            <span className="text-base">{item.icon}</span>
+            <span>{item.name}</span>
+          </button>
+        ))}
       </div>
     </main>
   );
