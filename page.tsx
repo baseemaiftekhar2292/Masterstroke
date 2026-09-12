@@ -1,359 +1,392 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { 
+  MessageSquare, 
+  Video, 
+  TrendingUp, 
+  Calendar, 
+  FileText, 
+  Sparkles, 
+  CreditCard,
+  Volume2, 
+  Mic, 
+  Send, 
+  Globe,
+  Download,
+  Printer
+} from 'lucide-react';
 
-interface QuizQuestion {
-  q: string;
-  options: string[];
-  ans: number;
-  exp: string;
-}
-
-interface Teacher {
+// --- GENDER & DYNAMIC TEACHER RESPONSE SYSTEM ---
+interface Faculty {
   id: string;
   name: string;
+  gender: 'female' | 'male';
+  tag: string;
   role: string;
-  subject: string;
-  topic: string;
-  avatar: string;
-  expression: string;
-  badge: string;
-  bg: string;
-  intellectualScript: string;
-  notes: string;
-  quiz: QuizQuestion[];
+  avatarImg: string;
+  greeting: string;
+  generateExplanation: (query: string, lang: string) => string;
 }
 
-const STREAM_TEACHERS: Record<'jee' | 'neet', Teacher[]> = {
-  jee: [
-    {
-      id: 'jee-vikram',
-      name: 'Dr. Vikram Sharma',
-      role: 'Senior Physics Faculty (Ex-IITian)',
-      subject: 'Physics',
-      topic: 'Rotational Dynamics & Torque',
-      avatar: '👨‍🏫',
-      expression: '🧠 Analytical & Focused',
-      badge: 'IITian Mentor',
-      bg: 'from-blue-700 via-indigo-900 to-slate-950',
-      intellectualScript: 'Greetings aspirants! Torque is rotational force: τ = r × F. Notice how conservation of angular momentum governs rolling without slipping.',
-      notes: 'Center of Mass, Moment of Inertia (I = ∑mr²), Torque τ = r × F, Pure Rolling (v = ωR).',
-      quiz: [
-        {
-          q: "A wheel of radius R rolls without slipping. The velocity of the point touching the ground is:",
-          options: ["Zero", "v", "2v", "v/2"],
-          ans: 0,
-          exp: "In pure rolling, the contact point is instantaneously at rest relative to the surface."
-        },
-        {
-          q: "What is the dimension of Torque?",
-          options: ["[M L T⁻¹]", "[M L² T⁻²]", "[M L⁻¹ T⁻²]", "[M² L T⁻²]"],
-          ans: 1,
-          exp: "Torque = Force × Distance = [M L T⁻²] × [L] = [M L² T⁻²]."
-        }
-      ]
+const FACULTY_DATA: Record<string, Faculty> = {
+  ananya: {
+    id: 'ananya',
+    name: "Ananya Ma'am",
+    gender: 'female',
+    tag: 'AI ORGANIC SPECIALIST',
+    role: 'Master Faculty - Chemistry & NCERT',
+    avatarImg: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+    greeting: 'Namaste! Main Ananya Ma\'am hoon. Organic Chemistry aur NCERT ke doubts detail me samjhaungi.',
+    generateExplanation: (query: string, lang: string) => {
+      return `[${lang}] Ananya Ma'am:
+
+Maine aapka question "${query}" samajh liya hai! Is chapter ko main step-by-step detail me samjhaungi:
+
+1. **Key Concept Overview:**
+   Chemistry me is topic ko balance karne ke liye pehle structural oxidation states aur functional groups check karein.
+
+2. **Step-by-Step Breakdown:**
+   - Step 1: Chemical equation ke reactants aur products verify karein.
+   - Step 2: SI Units aur temperature conditions apply karein.
+
+3. **Practice Suggestion:**
+   Is concept par NCERT ke top 5 questions zaroor attempt karein. Kya aapko ye samjhane ka tarika clear laga?`;
     }
-  ],
-  neet: [
-    {
-      id: 'neet-ananya',
-      name: 'Ananya Roy',
-      role: 'Organic & Physical Chem Lead',
-      subject: 'Chemistry',
-      topic: 'Biomolecules & Reaction Kinetics',
-      avatar: '👩‍🔬',
-      expression: '🔬 Deep Analysis',
-      badge: 'NEET AIR Specialist',
-      bg: 'from-emerald-700 via-teal-900 to-slate-950',
-      intellectualScript: 'Hello future doctors! In zero-order reactions, rate is independent of reactant concentration. Let us solve these high-yield NEET numericals.',
-      notes: 'Carbohydrate classification, Amino acid zwitterions, Activation Energy as thermodynamic barrier.',
-      quiz: [
-        {
-          q: "The unit of rate constant for a second-order reaction is:",
-          options: ["s⁻¹", "mol L⁻¹ s⁻¹", "L mol⁻¹ s⁻¹", "L² mol⁻² s⁻¹"],
-          ans: 2,
-          exp: "For nth order, unit is (mol/L)^(1-n) s⁻¹. For n=2, it becomes L mol⁻¹ s⁻¹."
-        }
-      ]
+  },
+  kabir: {
+    id: 'kabir',
+    name: 'Kabir Sir',
+    gender: 'male',
+    tag: 'JEE ADVANCED SPECIALIST',
+    role: 'Physics & Mechanics Genius',
+    avatarImg: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150',
+    greeting: 'Hello Champion! Main Kabir Sir hoon. Physics aur Mechanics ke tough concepts simple tarike se solve karenge!',
+    generateExplanation: (query: string, lang: string) => {
+      return `[${lang}] Kabir Sir:
+
+Sahi question pucha aapne! Topic "${query}" ko main physics perspective se derive karke samjhaunga:
+
+1. **Fundamental Laws:**
+   Newton's laws aur energy conservation principles apply karke equation set up karenge.
+
+2. **Numerical Breakdown:**
+   - Step 1: Vector directions aur free body diagram draw karein.
+   - Step 2: Values substitute karke final answer calculate karein.
+
+3. **JEE Tip:**
+   Is numerical logic ko dhyan se note kar lo. Kya ek example question aur solve karein?`;
     }
-  ]
+  }
 };
 
-export default function Home() {
-  // Stream & Subscription Locking States
-  const [userSubscription, setUserSubscription] = useState<'jee' | 'neet' | null>('jee');
-  const [activeStream, setActiveStream] = useState<'jee' | 'neet'>('jee');
+export default function Page() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedFaculty, setSelectedFaculty] = useState('ananya');
+  const [selectedLanguage, setSelectedLanguage] = useState('Hinglish (Hindi + Eng)');
   
-  // Active Character State
-  const [activeTeacher, setActiveTeacher] = useState<Teacher>(STREAM_TEACHERS.jee[0]);
-  const [currentExpression, setCurrentExpression] = useState('💬 Active');
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  
-  // Quiz & Coupon States
-  const [answers, setAnswers] = useState<number[]>([]);
-  const [submitted, setSubmitted] = useState(false);
-  const [couponCode, setCouponCode] = useState('');
-  const [discountApplied, setDiscountApplied] = useState(false);
+  // Dynamic Chat Messages state
+  const [messages, setMessages] = useState([
+    {
+      sender: 'ai',
+      faculty: "Ananya Ma'am",
+      text: "[Hinglish (Hindi + Eng)] Ananya Ma'am: Namaste! Kisi bhi chapter ya numerical ka doubt puchein, main step-by-step detail me samjhaungi!"
+    }
+  ]);
+  const [inputText, setInputText] = useState('');
 
-  // Audio handling
-  const [loadingAudio, setLoadingAudio] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  // Subscription Modal State
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState(false);
 
-  const isLocked = userSubscription !== null && userSubscription !== activeStream;
+  const currentFaculty = FACULTY_DATA[selectedFaculty];
 
-  // Stream Tab Toggle Effect
-  const handleStreamChange = (stream: 'jee' | 'neet') => {
-    setActiveStream(stream);
-    setActiveTeacher(STREAM_TEACHERS[stream][0]);
-    setAnswers([]);
-    setSubmitted(false);
-    setAudioUrl(null);
-    setIsSpeaking(false);
+  const handleSendMessage = () => {
+    if (!inputText.trim()) return;
+
+    const userQuery = inputText;
+    const userMsg = { sender: 'user', text: userQuery, faculty: '' };
+    
+    // Dynamic detailed response generation (Gender & Language aware)
+    const detailedExplanation = currentFaculty.generateExplanation(userQuery, selectedLanguage);
+    const aiMsg = { 
+      sender: 'ai', 
+      faculty: currentFaculty.name, 
+      text: detailedExplanation 
+    };
+
+    setMessages((prev) => [...prev, userMsg, aiMsg]);
+    setInputText('');
   };
 
-  // Expression Animation Engine
-  useEffect(() => {
-    if (isSpeaking) {
-      const interval = setInterval(() => {
-        const exprs = ['🗣️ Explaining Concept', '🔍 Deep Analysis', '⚡ Intellectual Spark', '💡 Solving Live'];
-        setCurrentExpression(exprs[Math.floor(Math.random() * exprs.length)]);
-      }, 1800);
-      return () => clearInterval(interval);
+  const handleApplyPromo = () => {
+    if (promoCode.trim().toUpperCase() === 'NEW2MASTRSTRK') {
+      setAppliedDiscount(true);
     } else {
-      setCurrentExpression(activeTeacher.expression);
+      alert('Invalid Promo Code! Try: NEW2MASTRSTRK');
     }
-  }, [isSpeaking, activeTeacher]);
-
-  const handleLiveInteraction = async (text: string) => {
-    setLoadingAudio(true);
-    setIsSpeaking(true);
-    setCurrentExpression('🧠 Generating AI Audio...');
-    
-    try {
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
-      if (res.ok) {
-        const blob = await res.blob();
-        setAudioUrl(URL.createObjectURL(blob));
-        setCurrentExpression('🗣️ Live Lecturing');
-      } else {
-        alert('Vercel par OPENAI_API_KEY set/verify karein.');
-        setIsSpeaking(false);
-      }
-    } catch {
-      alert('Interaction Error.');
-      setIsSpeaking(false);
-    }
-    setLoadingAudio(false);
   };
 
   return (
-    <main className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 min-h-screen bg-slate-950 text-white font-sans">
+    <div className="flex h-screen w-full bg-[#060a12] text-slate-100 overflow-hidden font-sans">
       
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-4 py-1 rounded-full text-xs font-bold tracking-widest uppercase animate-pulse">
-          Masterstroke Live AI Studio
-        </span>
-        <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-400 via-teal-300 to-yellow-400 bg-clip-text text-transparent">
-          Interactive AI Faculty & Authentic Notes
-        </h1>
-        <p className="text-gray-400 text-sm">Live Expressions, Stream Locking & Dynamic NEET/JEE Assessment</p>
-      </div>
-
-      {/* Stream Selector Tabs */}
-      <div className="flex justify-center gap-4">
-        <button 
-          onClick={() => handleStreamChange('jee')}
-          className={`px-6 py-3 rounded-2xl font-extrabold text-sm border transition flex items-center gap-2 ${activeStream === 'jee' ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-gray-400 hover:bg-slate-800'}`}
-        >
-          ⚡ JEE Main & Advanced {userSubscription === 'jee' && '✓'}
-        </button>
-
-        <button 
-          onClick={() => handleStreamChange('neet')}
-          className={`px-6 py-3 rounded-2xl font-extrabold text-sm border transition flex items-center gap-2 ${activeStream === 'neet' ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-gray-400 hover:bg-slate-800'}`}
-        >
-          🩺 NEET UG Medical {userSubscription === 'neet' && '✓'} {userSubscription === 'jee' && '🔒'}
-        </button>
-      </div>
-
-      {/* Stream Locked View with Loyalty Coupon */}
-      {isLocked ? (
-        <div className="border border-yellow-500/30 bg-slate-900/90 rounded-3xl p-8 text-center space-y-6 shadow-2xl">
-          <div className="text-6xl animate-bounce">🔒</div>
-          <div className="space-y-2 max-w-lg mx-auto">
-            <h2 className="text-2xl font-extrabold text-yellow-400">
-              {activeStream.toUpperCase()} Stream Access Locked
-            </h2>
-            <p className="text-sm text-gray-300">
-              Aapka active plan **{userSubscription?.toUpperCase()}** hai. {activeStream.toUpperCase()} content unlock karne ke liye add-on pass required hai.
-            </p>
+      {/* 1. PERMANENT LEFT NAVIGATION SIDEBAR */}
+      <aside className="w-64 bg-[#0a0f1d] border-r border-slate-800/80 flex flex-col justify-between p-4 shrink-0">
+        <div>
+          <div className="flex items-center gap-2 mb-6 px-2">
+            <Sparkles className="w-6 h-6 text-cyan-400" />
+            <h1 className="text-lg font-bold tracking-wider text-white">MASTERSTROKE</h1>
           </div>
 
-          <div className="bg-slate-950 p-6 rounded-2xl border border-dashed border-teal-500/50 max-w-md mx-auto space-y-4">
-            <span className="bg-teal-500/20 text-teal-300 text-xs font-bold px-3 py-1 rounded-full border border-teal-500/40">
-              🎁 Existing User Discount
+          {/* 2-Day Free Trial Alert */}
+          <div className="bg-gradient-to-r from-cyan-950 to-indigo-950 border border-cyan-500/30 rounded-xl p-3 mb-6 text-xs text-cyan-200">
+            <p className="font-semibold mb-1">🎁 2-Day Free Trial Active</p>
+            <p className="text-slate-400">Full access to AI Faculty & Lectures.</p>
+          </div>
+
+          <nav className="space-y-1">
+            {[
+              { id: 'dashboard', label: 'Live AI Studio Faculty', icon: MessageSquare },
+              { id: 'lectures', label: 'Chapter Lectures', icon: Video },
+              { id: 'progress', label: 'Progress Tracking', icon: TrendingUp },
+              { id: 'attendance', label: 'Attendance Record', icon: Calendar },
+              { id: 'papers', label: 'PDF Practice Papers', icon: FileText }
+            ].map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
+                    isActive 
+                      ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' 
+                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Upgrade / Autopay Subscription Button */}
+        <div className="pt-4 border-t border-slate-800/80">
+          <button
+            onClick={() => setShowSubModal(true)}
+            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 text-xs transition-all"
+          >
+            <CreditCard className="w-4 h-4" />
+            Upgrade Plan (₹429)
+          </button>
+        </div>
+      </aside>
+
+      {/* 2. MAIN WORKSPACE */}
+      <main className="flex-1 flex flex-col h-full bg-[#080d1a] overflow-hidden">
+        
+        {/* Top Header Bar */}
+        <header className="px-6 py-3.5 border-b border-slate-800/80 flex justify-between items-center bg-[#0a0f1d]/50">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold text-white tracking-wide uppercase">
+              {activeTab === 'dashboard' ? 'LIVE AI STUDIO FACULTY' : activeTab.toUpperCase()}
             </span>
-            <p className="text-xs text-gray-300">
-              Existing client hone par aapko milta hai **₹250 Flat Off**!
-            </p>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] text-emerald-400 font-bold tracking-wider">
+              STUDIO LIVE
+            </span>
+          </div>
+
+          {/* Language Selector */}
+          <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5">
+            <Globe className="w-3.5 h-3.5 text-cyan-400" />
+            <select 
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="bg-transparent text-xs text-slate-300 focus:outline-none cursor-pointer"
+            >
+              <option value="Hinglish (Hindi + Eng)" className="bg-slate-900">Hinglish (Hindi + Eng)</option>
+              <option value="Hindi" className="bg-slate-900">Hindi</option>
+              <option value="English" className="bg-slate-900">English</option>
+              <option value="Marathi" className="bg-slate-900">Marathi</option>
+            </select>
+          </div>
+        </header>
+
+        {/* TAB 1: DASHBOARD & DYNAMIC TEACHING CHAT */}
+        {activeTab === 'dashboard' && (
+          <div className="flex-1 flex overflow-hidden p-4 gap-4">
             
-            <div className="bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center text-xs font-mono">
-              <span className="text-gray-400">Coupon:</span>
-              <span className="text-yellow-400 font-bold text-sm select-all">EXISTING250</span>
+            {/* Faculty Selection Card */}
+            <div className="w-72 flex flex-col gap-4">
+              <div className="space-y-3">
+                {Object.values(FACULTY_DATA).map((fac) => {
+                  const isSelected = selectedFaculty === fac.id;
+                  return (
+                    <div
+                      key={fac.id}
+                      onClick={() => setSelectedFaculty(fac.id)}
+                      className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                        isSelected 
+                          ? 'bg-slate-900 border-cyan-500/60 shadow-lg shadow-cyan-500/10' 
+                          : 'bg-slate-950/60 border-slate-800/60 opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <div className="flex gap-3 items-center">
+                        <img src={fac.avatarImg} alt={fac.name} className="w-11 h-11 rounded-lg object-cover border border-cyan-500/30" />
+                        <div>
+                          <span className="text-[9px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/20 font-semibold">
+                            {fac.tag}
+                          </span>
+                          <h4 className="font-bold text-xs text-white mt-1">{fac.name}</h4>
+                          <p className="text-[10px] text-slate-400 leading-tight">{fac.role}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Live Classroom Audio Waveform Frame */}
+              <div className="mt-auto bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col items-center justify-center text-center">
+                <div className="relative w-full h-24 bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center mb-2 border border-slate-800">
+                  <img src={currentFaculty.avatarImg} alt={currentFaculty.name} className="w-full h-full object-cover opacity-60" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex items-end p-2">
+                    <span className="text-[10px] text-cyan-400 font-bold uppercase">STAGE: {currentFaculty.name}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Volume2 className="w-4 h-4 text-cyan-400 animate-pulse" />
+                  <span className="text-[10px] text-slate-400">AI Live Classroom Lipsync Active</span>
+                </div>
+              </div>
             </div>
 
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                placeholder="Enter EXISTING250" 
-                value={couponCode} 
-                onChange={(e) => setCouponCode(e.target.value)}
-                className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs w-full text-white"
+            {/* Main Interactive Chat Panel */}
+            <div className="flex-1 bg-slate-950/50 border border-slate-800/80 rounded-2xl flex flex-col justify-between p-4 overflow-hidden">
+              <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+                {messages.map((msg, idx) => (
+                  <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-xl p-3.5 rounded-xl text-xs leading-relaxed whitespace-pre-line ${
+                      msg.sender === 'user' 
+                        ? 'bg-cyan-500 text-black font-semibold' 
+                        : 'bg-slate-900 border border-slate-800 text-slate-200'
+                    }`}>
+                      {msg.sender === 'ai' && (
+                        <p className="text-[10px] text-cyan-400 font-bold mb-1 uppercase tracking-wider">{msg.faculty}</p>
+                      )}
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Chat Input Bar */}
+              <div className="mt-3 flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl p-2">
+                <button className="p-2 text-slate-400 hover:text-white">
+                  <Mic className="w-4 h-4" />
+                </button>
+                <input
+                  type="text"
+                  placeholder={`Ask ${currentFaculty.name} to explain any chapter in ${selectedLanguage}...`}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                  className="bg-transparent text-xs text-white flex-1 focus:outline-none px-2"
+                />
+                <button 
+                  onClick={handleSendMessage}
+                  className="p-2 bg-cyan-500 hover:bg-cyan-400 text-black rounded-lg transition-all"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: PRINTABLE PDF PRACTICE PAPERS */}
+        {activeTab === 'papers' && (
+          <div className="p-6 overflow-y-auto space-y-4">
+            <h2 className="text-sm font-bold text-cyan-400 uppercase tracking-wider">Chapter-wise Printable PDF Practice Papers</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {['Structure of Atom - Advanced Sheet', 'Organic Reaction Mechanisms - Set A', 'Newton Laws of Motion & Friction'].map((paper, idx) => (
+                <div key={idx} className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex justify-between items-center">
+                  <div>
+                    <h4 className="font-semibold text-xs text-white">{paper}</h4>
+                    <p className="text-[10px] text-slate-400 mt-1">Includes Step-by-Step Answer Keys</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="p-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-xs flex items-center gap-1">
+                      <Download className="w-3.5 h-3.5" /> Download
+                    </button>
+                    <button className="p-2 bg-cyan-500 hover:bg-cyan-400 text-black rounded-lg text-xs flex items-center gap-1 font-semibold">
+                      <Printer className="w-3.5 h-3.5" /> Print
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* 3. PROMO CODE SUBSCRIPTION MODAL */}
+      {showSubModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0b1329] border border-cyan-500/40 rounded-2xl max-w-md w-full p-6 relative shadow-2xl">
+            <button 
+              onClick={() => setShowSubModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-lg font-bold text-white mb-1">Upgrade to Masterstroke Premium</h2>
+            <p className="text-xs text-slate-400 mb-5">Get unlimited Live AI Teacher access, multi-language videos, and PDF practice tests.</p>
+
+            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 mb-4">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-300">Monthly Plan Subscription</span>
+                <span className={`text-base font-bold ${appliedDiscount ? 'line-through text-slate-500' : 'text-white'}`}>
+                  ₹429 / month
+                </span>
+              </div>
+              {appliedDiscount && (
+                <div className="flex justify-between items-center mt-2 text-cyan-400 font-bold text-sm border-t border-slate-800 pt-2">
+                  <span>Discount Price (NEW2MASTRSTRK)</span>
+                  <span>₹199 / month</span>
+                </div>
+              )}
+            </div>
+
+            {/* Promo Code Input */}
+            <div className="flex gap-2 mb-5">
+              <input
+                type="text"
+                placeholder="Enter Promo Code (NEW2MASTRSTRK)"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                className="bg-slate-950 border border-slate-800 text-white rounded-lg px-3 py-2 text-xs flex-1 focus:outline-none focus:border-cyan-500"
               />
-              <button 
-                onClick={() => {
-                  if (couponCode.toUpperCase() === 'EXISTING250') setDiscountApplied(true);
-                  else alert('Invalid Coupon! Use: EXISTING250');
-                }}
-                className="bg-teal-600 hover:bg-teal-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition"
+              <button
+                onClick={handleApplyPromo}
+                className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold px-3 py-2 rounded-lg text-xs"
               >
                 Apply
               </button>
             </div>
 
-            <div className="pt-2 border-t border-slate-800 text-left space-y-1 text-xs">
-              <div className="flex justify-between text-gray-400">
-                <span>Price:</span>
-                <span className="line-through">₹499/mo</span>
-              </div>
-              {discountApplied && (
-                <div className="flex justify-between text-green-400 font-bold">
-                  <span>Loyalty Offer:</span>
-                  <span>- ₹250</span>
-                </div>
-              )}
-              <div className="flex justify-between font-bold text-white text-sm pt-1">
-                <span>Total:</span>
-                <span className="text-yellow-400">{discountApplied ? '₹249/mo' : '₹499/mo'}</span>
-              </div>
-            </div>
-
-            <button 
-              onClick={() => {
-                setUserSubscription(activeStream);
-                alert(`${activeStream.toUpperCase()} Stream Unlocked!`);
-              }}
-              className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 text-black font-extrabold py-3 rounded-xl text-sm transition shadow-lg"
-            >
-              Unlock {activeStream.toUpperCase()} Stream
+            <button className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold py-3 rounded-xl shadow-lg shadow-cyan-500/20 text-xs text-center">
+              Activate Autopay & Subscribe
             </button>
           </div>
-        </div>
-      ) : (
-        /* Unlocked Live Interactive Stage */
-        <div className="border border-slate-800 bg-slate-900/90 rounded-3xl p-6 md:p-8 shadow-2xl space-y-8">
-          
-          {/* Character Card Header */}
-          <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-5 gap-4">
-            <div className="flex items-center gap-4">
-              <div className={`text-6xl bg-slate-950 p-3 rounded-2xl border ${isSpeaking ? 'animate-bounce border-yellow-400' : 'border-slate-700'}`}>
-                {activeTeacher.avatar}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-extrabold text-xl text-white">{activeTeacher.name}</h3>
-                  <span className="bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-0.5 rounded-full border border-emerald-500/30 font-semibold">Live Mode</span>
-                </div>
-                <p className="text-xs text-yellow-400 font-mono mt-1">Expression: {currentExpression}</p>
-              </div>
-            </div>
-
-            <button 
-              onClick={() => handleLiveInteraction(activeTeacher.intellectualScript)}
-              disabled={loadingAudio}
-              className="bg-gradient-to-r from-blue-600 via-indigo-600 to-teal-500 hover:from-blue-500 text-white font-extrabold px-6 py-3 rounded-2xl shadow-xl transition disabled:opacity-50 text-sm border border-blue-400/30"
-            >
-              {loadingAudio ? '🧠 Generating Speech...' : '🎙️ Start Live Interaction'}
-            </button>
-          </div>
-
-          {/* Audio Player Banner */}
-          {audioUrl && (
-            <div className="bg-slate-950 p-4 rounded-2xl border border-teal-500/40 space-y-2">
-              <p className="text-xs text-teal-400 font-mono flex justify-between">
-                <span>🔊 Live Speech Stream Active</span>
-                <span className="animate-pulse">● Speaking...</span>
-              </p>
-              <audio controls autoPlay onEnded={() => setIsSpeaking(false)} className="w-full h-10">
-                <source src={audioUrl} type="audio/mpeg" />
-              </audio>
-            </div>
-          )}
-
-          {/* Authentic Syllabus Notes Box */}
-          <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-2">
-            <h4 className="text-xs font-bold text-yellow-400 uppercase tracking-wider">Authentic High-Yield Notes:</h4>
-            <p className="text-xs text-gray-300 font-mono leading-relaxed">{activeTeacher.notes}</p>
-          </div>
-
-          {/* Interactive NEET/JEE Jobsheet */}
-          <div className="space-y-6 pt-2 border-t border-slate-800">
-            <div className="flex justify-between items-center">
-              <h4 className="font-bold text-lg text-yellow-400 flex items-center gap-2">🎯 Live Assessment Sheet</h4>
-              <span className="text-xs bg-red-500/20 text-red-400 px-3 py-1 rounded-full border border-red-500/30 font-mono">Exam Mode</span>
-            </div>
-
-            {activeTeacher.quiz.map((q, idx) => (
-              <div key={idx} className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
-                <p className="font-semibold text-sm text-gray-100">Q{idx + 1}. {q.q}</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {q.options.map((opt, optIdx) => (
-                    <button
-                      key={optIdx}
-                      onClick={() => {
-                        const newAns = [...answers];
-                        newAns[idx] = optIdx;
-                        setAnswers(newAns);
-                      }}
-                      className={`text-left p-3.5 rounded-xl text-xs font-medium border transition ${answers[idx] === optIdx ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-gray-300 hover:bg-slate-800'}`}
-                    >
-                      {optIdx + 1}) {opt}
-                    </button>
-                  ))}
-                </div>
-
-                {submitted && (
-                  <div className={`p-4 rounded-xl text-xs mt-2 border ${answers[idx] === q.ans ? 'bg-emerald-950/40 border-emerald-500 text-emerald-300' : 'bg-red-950/40 border-red-500 text-red-300'}`}>
-                    <p className="font-bold">{answers[idx] === q.ans ? '✅ Correct' : '❌ Incorrect'}</p>
-                    <p className="mt-1 text-gray-200"><span className="text-yellow-400 font-semibold">Faculty Explanation: </span>{q.exp}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {!submitted ? (
-              <button 
-                onClick={() => setSubmitted(true)}
-                disabled={answers.length < activeTeacher.quiz.length}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-2xl transition disabled:opacity-40 text-sm shadow-xl"
-              >
-                Submit Answers
-              </button>
-            ) : (
-              <div className="p-4 bg-slate-800/80 rounded-2xl text-center border border-teal-500/30">
-                <p className="text-lg font-extrabold text-teal-300">Assessment Submitted! 🎉</p>
-              </div>
-            )}
-          </div>
-
         </div>
       )}
 
-    </main>
+    </div>
   );
 }
