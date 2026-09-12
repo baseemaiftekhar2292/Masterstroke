@@ -7,7 +7,6 @@ import {
   FileCheck, Headphones, MessageSquare, BarChart3, Plus, ShieldCheck, CheckSquare, Clock
 } from 'lucide-react';
 
-// authentic nta syllabus dataset
 const SYLLABUS_DATA = {
   JEE: [
     { subject: 'Physics', chapters: ['Units & Measurements', 'Kinematics 1D & 2D', 'Laws of Motion & Friction', 'Work, Power & Energy', 'Rotational Dynamics', 'Electrostatics & Capacitance'] },
@@ -26,7 +25,6 @@ export default function MasterstrokeApp() {
   const [activeTab, setActiveTab] = useState('doubt-solver');
   const [selectedLanguage, setSelectedLanguage] = useState('Hinglish (Hindi + Eng)');
   
-  // Student Profile State
   const [userProfile, setUserProfile] = useState({
     name: 'Aarav Sharma',
     target: 'JEE Main & Advanced 2026',
@@ -36,7 +34,6 @@ export default function MasterstrokeApp() {
     totalChapters: 36
   });
 
-  // Dual-Mode Chat State
   const [chatMode, setChatMode] = useState<'solo' | 'group'>('solo');
   const [messages, setMessages] = useState<any[]>([
     {
@@ -47,21 +44,17 @@ export default function MasterstrokeApp() {
   ]);
   const [inputText, setInputText] = useState('');
 
-  // Quick Audio Revise State
   const [selectedPodcastChapter, setSelectedPodcastChapter] = useState('Kinematics 1D & 2D');
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [podcastLog, setPodcastLog] = useState<string | null>(null);
 
-  // JEE Online CBT Interactive Test Modal
   const [activeCbtTest, setActiveCbtTest] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showSolution, setShowSolution] = useState(false);
 
-  // Subscription Modal State
   const [showSubModal, setShowSubModal] = useState(false);
   const [userSubscription, setUserSubscription] = useState<'NONE' | 'JEE' | 'NEET'>('NONE');
 
-  // Handle Real-Time Live Doubt Solving
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
 
@@ -80,7 +73,6 @@ export default function MasterstrokeApp() {
     setInputText('');
   };
 
-  // Quick Audio Revise (Podcast Generator)
   const handleGeneratePodcast = () => {
     const summary = `Welcome to Quick Audio Revise! Generating a 5-minute audio podcast for "${selectedPodcastChapter}" in ${selectedLanguage}. Focusing on high-yield NTA questions, key formulas, and quick memory tricks...`;
     setPodcastLog(summary);
@@ -99,7 +91,6 @@ export default function MasterstrokeApp() {
     }
   };
 
-  // Direct Razorpay Payment Gateway (₹229 Flat Including GST)
   const handleSubscribe = () => {
     const loadRazorpayScript = () => {
       return new Promise((resolve) => {
@@ -123,7 +114,7 @@ export default function MasterstrokeApp() {
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_dummykey123',
-        amount: 22900, // ₹229 (22900 Paise)
+        amount: 22900,
         currency: 'INR',
         name: 'MASTERSTROKE EdTech',
         description: `${examType} Target Batch Subscription (Incl. 18% GST)`,
@@ -150,7 +141,6 @@ export default function MasterstrokeApp() {
   return (
     <div className="flex h-screen w-full bg-[#050811] text-slate-100 overflow-hidden font-sans">
       
-      {/* 1. PERMANENT LEFT NAVIGATION SIDEBAR */}
       <aside className="w-64 bg-[#080d1a] border-r border-slate-800/80 flex flex-col justify-between p-4 shrink-0">
         <div>
           <div className="flex items-center gap-2 mb-6 px-2">
@@ -158,7 +148,6 @@ export default function MasterstrokeApp() {
             <h1 className="text-lg font-bold tracking-wider text-white">MASTERSTROKE</h1>
           </div>
 
-          {/* Exam Switch Toggle (JEE vs NEET) */}
           <div className="bg-slate-900 p-1 rounded-xl border border-slate-800 flex mb-4">
             <button
               onClick={() => setExamType('JEE')}
@@ -216,10 +205,8 @@ export default function MasterstrokeApp() {
         </div>
       </aside>
 
-      {/* 2. MAIN WORKSPACE */}
       <main className="flex-1 flex flex-col h-full bg-[#070b16] overflow-hidden">
         
-        {/* TOP HEADER */}
         <header className="px-6 py-3.5 border-b border-slate-800/80 flex justify-between items-center bg-[#080d1a]/50">
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold text-white tracking-wide uppercase">
@@ -245,7 +232,6 @@ export default function MasterstrokeApp() {
               </select>
             </div>
 
-            {/* User Avatar Mini */}
             <div className="flex items-center gap-2 border-l border-slate-800 pl-3">
               <img src={userProfile.avatar} alt="User" className="w-7 h-7 rounded-full object-cover border border-cyan-400" />
               <span className="text-xs font-semibold text-slate-200">{userProfile.name}</span>
@@ -253,11 +239,8 @@ export default function MasterstrokeApp() {
           </div>
         </header>
 
-        {/* TAB 1: REAL-TIME LIVE AI DOUBT SOLVER (SOLO & GROUP STUDY MODE) */}
         {activeTab === 'doubt-solver' && (
           <div className="flex-1 flex flex-col p-4 overflow-hidden">
-            
-            {/* Solo vs Group Study Toggle */}
             <div className="flex justify-between items-center bg-slate-900/80 p-2 rounded-xl border border-slate-800 mb-3">
               <div className="flex items-center gap-2">
                 <button
@@ -290,7 +273,6 @@ export default function MasterstrokeApp() {
               )}
             </div>
 
-            {/* Live Chat Window */}
             <div className="flex-1 bg-slate-950/60 border border-slate-800/80 rounded-2xl flex flex-col justify-between p-4 overflow-hidden">
               <div className="flex-1 overflow-y-auto space-y-3 pr-2">
                 {messages.map((msg, idx) => (
@@ -309,7 +291,6 @@ export default function MasterstrokeApp() {
                 ))}
               </div>
 
-              {/* Chat Input Bar */}
               <div className="mt-3 flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl p-2">
                 <button className="p-2 text-slate-400 hover:text-white">
                   <Mic className="w-4 h-4" />
@@ -338,7 +319,6 @@ export default function MasterstrokeApp() {
           </div>
         )}
 
-        {/* TAB 2: EXAM-RESPECTIVE PRACTICE JOB SHEETS */}
         {activeTab === 'job-sheets' && (
           <div className="p-6 overflow-y-auto space-y-6 flex-1">
             <div className="flex justify-between items-center">
@@ -393,7 +373,6 @@ export default function MasterstrokeApp() {
           </div>
         )}
 
-        {/* TAB 3: QUICK AUDIO REVISE (PODCAST GENERATOR) */}
         {activeTab === 'audio-revise' && (
           <div className="p-6 overflow-y-auto space-y-6 flex-1">
             <div className="bg-gradient-to-r from-cyan-950/60 via-slate-900 to-indigo-950/60 border border-cyan-500/30 p-6 rounded-2xl">
@@ -452,10 +431,8 @@ export default function MasterstrokeApp() {
           </div>
         )}
 
-        {/* TAB 4: STUDENT PROFILE & CHAPTER-TO-CHAPTER PROGRESS ANALYTICS */}
         {activeTab === 'profile-dashboard' && (
           <div className="p-6 overflow-y-auto space-y-6 flex-1">
-            {/* Student Profile Overview Card */}
             <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="relative">
@@ -476,7 +453,6 @@ export default function MasterstrokeApp() {
               </button>
             </div>
 
-            {/* Chapter-to-Chapter Performance Matrix */}
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
                 <p className="text-xs text-slate-400">Chapters Completed</p>
@@ -492,7 +468,6 @@ export default function MasterstrokeApp() {
               </div>
             </div>
 
-            {/* Detailed Chapter Breakdown Progress */}
             <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Chapter-to-Chapter Mastery Status</h3>
               <div className="space-y-3">
@@ -520,7 +495,6 @@ export default function MasterstrokeApp() {
 
       </main>
 
-      {/* JEE ONLINE CBT MOCK INTERFACE MODAL */}
       {activeCbtTest && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="bg-[#0b1329] border border-cyan-500/40 rounded-2xl max-w-2xl w-full p-6 relative shadow-2xl">
@@ -586,7 +560,6 @@ export default function MasterstrokeApp() {
         </div>
       )}
 
-      {/* SUBSCRIPTION MODAL (₹229 FLAT INCLUDING GST) */}
       {showSubModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[#0b1329] border border-cyan-500/40 rounded-2xl max-w-md w-full p-6 relative shadow-2xl">
