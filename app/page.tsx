@@ -1,82 +1,101 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import { useState } from "react";
 import {
   Atom,
   BrainCircuit,
   Calculator,
   Camera,
   ChevronRight,
-  CircleUserRound,
   FlaskConical,
   Headphones,
   ImagePlus,
   LayoutDashboard,
   Menu,
-  MessageCircle,
   Mic,
-  Paperclip,
-  Play,
   Send,
   Sparkles,
+  Target,
   Trophy,
-  Upload,
-  X,
-  Zap,
   BookOpen,
   Clock3,
-  Target,
   Bot,
+  X,
+  Zap,
 } from "lucide-react";
 
 type Exam = "JEE" | "NEET";
 
-type Subject =
-  | "Physics"
-  | "Chemistry"
-  | "Mathematics"
-  | "Biology"
-  | "Botany"
-  | "Zoology";
-
-const JEE_SUBJECTS: Subject[] = [
-  "Physics",
-  "Chemistry",
-  "Mathematics",
-];
-
-const NEET_SUBJECTS: Subject[] = [
-  "Physics",
-  "Chemistry",
-  "Biology",
-];
-
-const subjectIcon: Record<Subject, React.ReactNode> = {
-  Physics: <Atom size={18} />,
-  Chemistry: <FlaskConical size={18} />,
-  Mathematics: <Calculator size={18} />,
-  Biology: <BrainCircuit size={18} />,
-  Botany: <BookOpen size={18} />,
-  Zoology: <Bot size={18} />,
+type Faculty = {
+  name: string;
+  subject: string;
+  specialty: string;
+  avatar: string;
 };
 
-export default function MasterstrokeV2() {
+const JEE_FACULTY: Faculty[] = [
+  {
+    name: "Dr. Vikram Varma",
+    subject: "Physics",
+    specialty: "Mechanics • Electrodynamics • Modern Physics",
+    avatar: "VV",
+  },
+  {
+    name: "Ananya Roy",
+    subject: "Chemistry",
+    specialty: "Organic • Inorganic • Physical Chemistry",
+    avatar: "AR",
+  },
+  {
+    name: "Prof. Devraj",
+    subject: "Mathematics",
+    specialty: "Algebra • Calculus • Coordinate Geometry",
+    avatar: "PD",
+  },
+];
+
+const NEET_FACULTY: Faculty[] = [
+  {
+    name: "Dr. Vikram Varma",
+    subject: "Physics",
+    specialty: "Mechanics • Electricity • Modern Physics",
+    avatar: "VV",
+  },
+  {
+    name: "Ananya Roy",
+    subject: "Chemistry",
+    specialty: "Organic • Inorganic • Physical Chemistry",
+    avatar: "AR",
+  },
+  {
+    name: "Dr. Ayesha Khan",
+    subject: "Biology",
+    specialty: "Botany • Zoology • Human Biology",
+    avatar: "AK",
+  },
+];
+
+export default function MasterstrokeV3() {
   const [exam, setExam] = useState<Exam>("JEE");
-  const [subject, setSubject] = useState<Subject>("Physics");
+  const [selectedFaculty, setSelectedFaculty] =
+    useState<Faculty>(JEE_FACULTY[0]);
+
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [image, setImage] = useState<string | null>(null);
-  const [mobileMenu, setMobileMenu] = useState(false);
   const [voiceActive, setVoiceActive] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
-  const subjects =
-    exam === "JEE" ? JEE_SUBJECTS : NEET_SUBJECTS;
+  const faculty =
+    exam === "JEE" ? JEE_FACULTY : NEET_FACULTY;
 
-  function changeExam(nextExam: Exam) {
-    setExam(nextExam);
-    setSubject(nextExam === "JEE" ? "Physics" : "Physics");
+  function changeExam(next: Exam) {
+    setExam(next);
+    setSelectedFaculty(
+      next === "JEE"
+        ? JEE_FACULTY[0]
+        : NEET_FACULTY[0]
+    );
     setAnswer("");
   }
 
@@ -94,7 +113,8 @@ export default function MasterstrokeV2() {
         },
         body: JSON.stringify({
           exam,
-          subject,
+          subject: selectedFaculty.subject,
+          faculty: selectedFaculty.name,
           question,
           image,
         }),
@@ -108,18 +128,18 @@ export default function MasterstrokeV2() {
 
       setAnswer(
         data.answer ||
-          "The AI returned no answer. Please try the question again."
+          "No answer was returned by the AI."
       );
     } catch {
       setAnswer(
-        "AI connection is not configured yet. Connect your /api/solve endpoint to an AI model to enable real-time JEE/NEET answers."
+        "Your AI Faculty is ready, but the AI backend is not connected yet. Connect /api/solve to an AI model to receive real answers."
       );
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   }
 
-  function handleImage(file: File) {
+  function uploadImage(file: File) {
     const reader = new FileReader();
 
     reader.onload = () => {
@@ -129,19 +149,19 @@ export default function MasterstrokeV2() {
     reader.readAsDataURL(file);
   }
 
-  function startVoice() {
-    const SpeechRecognition =
+  function voiceInput() {
+    const Recognition =
       typeof window !== "undefined"
         ? (window as any).SpeechRecognition ||
           (window as any).webkitSpeechRecognition
         : null;
 
-    if (!SpeechRecognition) {
-      alert("Voice input is not supported in this browser.");
+    if (!Recognition) {
+      alert("Voice input is not supported here.");
       return;
     }
 
-    const recognition = new SpeechRecognition();
+    const recognition = new Recognition();
 
     recognition.lang = "en-IN";
     recognition.continuous = false;
@@ -150,11 +170,11 @@ export default function MasterstrokeV2() {
     setVoiceActive(true);
 
     recognition.onresult = (event: any) => {
-      const transcript =
+      const text =
         event.results[0][0].transcript;
 
       setQuestion((old) =>
-        old ? `${old} ${transcript}` : transcript
+        old ? `${old} ${text}` : text
       );
     };
 
@@ -165,20 +185,22 @@ export default function MasterstrokeV2() {
     recognition.start();
   }
 
-  function speakAnswer() {
-    if (!answer || typeof window === "undefined") return;
+  function speak() {
+    if (!answer) return;
 
     window.speechSynthesis.cancel();
 
-    const speech = new SpeechSynthesisUtterance(answer);
-    speech.rate = 0.95;
+    const speech =
+      new SpeechSynthesisUtterance(answer);
+
+    speech.rate = 0.92;
     speech.pitch = 1;
 
     window.speechSynthesis.speak(speech);
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#03020a] text-white">
+    <main className="min-h-screen bg-[#02020a] text-white">
       <style jsx global>{`
         * {
           box-sizing: border-box;
@@ -187,649 +209,649 @@ export default function MasterstrokeV2() {
         body {
           margin: 0;
           background:
-            radial-gradient(circle at 20% 10%, rgba(0, 255, 255, .13), transparent 28%),
-            radial-gradient(circle at 80% 15%, rgba(145, 0, 255, .16), transparent 30%),
-            radial-gradient(circle at 50% 90%, rgba(255, 0, 153, .08), transparent 35%),
-            #03020a;
-          font-family: Inter, Arial, sans-serif;
+            radial-gradient(
+              circle at 10% 10%,
+              rgba(0, 245, 255, .12),
+              transparent 25%
+            ),
+            radial-gradient(
+              circle at 90% 10%,
+              rgba(155, 70, 255, .15),
+              transparent 28%
+            ),
+            radial-gradient(
+              circle at 50% 100%,
+              rgba(255, 20, 180, .09),
+              transparent 35%
+            ),
+            #02020a;
+          font-family: Arial, Helvetica, sans-serif;
         }
 
-        .neon-border {
-          border: 1px solid rgba(0, 240, 255, .22);
-          box-shadow:
-            0 0 20px rgba(0, 240, 255, .06),
-            inset 0 0 25px rgba(130, 0, 255, .035);
+        .grid {
+          background-image:
+            linear-gradient(
+              rgba(0, 245, 255, .035) 1px,
+              transparent 1px
+            ),
+            linear-gradient(
+              90deg,
+              rgba(0, 245, 255, .035) 1px,
+              transparent 1px
+            );
+          background-size: 42px 42px;
         }
 
         .glass {
-          background: rgba(10, 10, 25, .68);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
+          background: rgba(8, 8, 22, .72);
+          backdrop-filter: blur(25px);
+          border: 1px solid rgba(255,255,255,.07);
+          box-shadow:
+            0 0 35px rgba(0,245,255,.035),
+            inset 0 0 30px rgba(140,70,255,.025);
         }
 
-        .neon-text {
+        .neon {
           text-shadow:
-            0 0 8px rgba(0, 240, 255, .8),
-            0 0 25px rgba(120, 0, 255, .5);
+            0 0 8px rgba(0,245,255,.8),
+            0 0 25px rgba(100,50,255,.45);
         }
 
-        .gradient-text {
-          background: linear-gradient(
-            90deg,
-            #00f6ff,
-            #7c5cff,
-            #ff35c9
-          );
+        .gradient {
+          background:
+            linear-gradient(
+              90deg,
+              #00f6ff,
+              #8b5cf6,
+              #ff36ca
+            );
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
         }
 
-        .grid-bg {
-          background-image:
-            linear-gradient(
-              rgba(0, 240, 255, .035) 1px,
-              transparent 1px
-            ),
-            linear-gradient(
-              90deg,
-              rgba(0, 240, 255, .035) 1px,
-              transparent 1px
-            );
-          background-size: 45px 45px;
-        }
-
-        .glow-button {
-          transition: all .2s ease;
-        }
-
-        .glow-button:hover {
-          transform: translateY(-1px);
+        .facultyGlow {
           box-shadow:
-            0 0 18px rgba(0, 240, 255, .3),
-            0 0 35px rgba(125, 70, 255, .2);
+            0 0 18px rgba(0,245,255,.13),
+            inset 0 0 25px rgba(120,70,255,.04);
         }
 
-        .scanline {
-          position: relative;
-          overflow: hidden;
+        .facultyGlow:hover {
+          transform: translateY(-2px);
+          border-color: rgba(0,245,255,.35);
+          box-shadow:
+            0 0 28px rgba(0,245,255,.18),
+            0 0 55px rgba(130,70,255,.1);
         }
 
-        .scanline:after {
-          content: "";
-          position: absolute;
-          left: 0;
-          right: 0;
-          height: 1px;
-          background: rgba(0, 246, 255, .12);
-          animation: scan 5s linear infinite;
+        .facultySelected {
+          border-color: rgba(0,245,255,.55) !important;
+          box-shadow:
+            0 0 25px rgba(0,245,255,.22),
+            inset 0 0 25px rgba(0,245,255,.05);
         }
 
-        @keyframes scan {
-          0% {
-            top: -5%;
-          }
-          100% {
-            top: 105%;
-          }
-        }
-
-        @keyframes pulseGlow {
-          0%, 100% {
-            opacity: .55;
-          }
-          50% {
-            opacity: 1;
-          }
-        }
-
-        .pulse-glow {
-          animation: pulseGlow 2.4s infinite;
+        .glow {
+          box-shadow:
+            0 0 15px rgba(0,245,255,.2),
+            0 0 40px rgba(130,70,255,.1);
         }
       `}</style>
 
-      {/* TOP NAVIGATION */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#03020a]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1500px] items-center justify-between px-4 py-4 md:px-7">
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#02020a]/85 backdrop-blur-2xl">
+        <div className="mx-auto flex max-w-[1550px] items-center justify-between px-4 py-4 md:px-7">
           <div className="flex items-center gap-3">
-            <button
-              className="rounded-xl border border-white/10 p-2 md:hidden"
-              onClick={() => setMobileMenu(!mobileMenu)}
-            >
+            <button className="rounded-xl border border-white/10 p-2 md:hidden">
               <Menu size={20} />
             </button>
 
-            <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-300/30 bg-cyan-300/5">
+            <div className="glow flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-300/30 bg-cyan-300/5">
               <Zap
-                className="text-cyan-300 pulse-glow"
                 size={23}
+                className="text-cyan-300"
               />
-              <span className="absolute inset-0 rounded-2xl shadow-[0_0_25px_rgba(0,240,255,.25)]" />
             </div>
 
             <div>
               <div className="text-lg font-black tracking-wider">
-                MASTER<span className="gradient-text">STROKE</span>
+                MASTER<span className="gradient">STROKE</span>
               </div>
-              <div className="text-[9px] tracking-[.35em] text-cyan-300/60">
-                AI LEARNING CORE
+
+              <div className="text-[8px] tracking-[.4em] text-cyan-300/55">
+                QUANTUM AI ACADEMY
               </div>
             </div>
           </div>
 
-          <div className="hidden items-center gap-2 md:flex">
-            <button className="rounded-xl px-4 py-2 text-sm text-white/60 hover:bg-white/5">
-              <LayoutDashboard className="mr-2 inline" size={16} />
+          <div className="hidden items-center gap-6 md:flex">
+            <span className="text-xs text-white/45">
               Dashboard
-            </button>
+            </span>
 
-            <button className="rounded-xl px-4 py-2 text-sm text-white/60 hover:bg-white/5">
-              <Trophy className="mr-2 inline" size={16} />
+            <span className="text-xs text-white/45">
+              CBT Simulator
+            </span>
+
+            <span className="text-xs text-white/45">
+              Edu-Vault
+            </span>
+
+            <span className="text-xs text-white/45">
               Progress
-            </button>
-
-            <button className="rounded-xl px-4 py-2 text-sm text-white/60 hover:bg-white/5">
-              <BookOpen className="mr-2 inline" size={16} />
-              Study Vault
-            </button>
+            </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden rounded-full border border-cyan-300/20 bg-cyan-300/5 px-3 py-1.5 text-xs text-cyan-200 sm:block">
-              AI ONLINE
-            </div>
+            <span className="hidden rounded-full border border-green-400/20 bg-green-400/5 px-3 py-1.5 text-[9px] font-bold text-green-300 sm:block">
+              ● AI ONLINE
+            </span>
 
-            <CircleUserRound
-              className="text-white/70"
-              size={28}
-            />
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5">
+              <Bot size={18} />
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="grid-bg min-h-[calc(100vh-73px)]">
-        <div className="mx-auto max-w-[1500px] px-4 py-6 md:px-7">
+      <div className="grid min-h-screen grid-bg">
+        <div className="mx-auto w-full max-w-[1550px] px-4 py-6 md:px-7">
+
           {/* HERO */}
-          <section className="relative mb-6 overflow-hidden rounded-3xl border border-cyan-300/10 bg-gradient-to-br from-cyan-500/[.06] via-purple-500/[.04] to-pink-500/[.05] p-6 md:p-9">
-            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
-            <div className="absolute -bottom-32 left-1/3 h-80 w-80 rounded-full bg-purple-500/10 blur-3xl" />
+          <section className="relative mb-6 overflow-hidden rounded-[30px] border border-cyan-300/10 bg-gradient-to-br from-cyan-400/[.07] via-purple-500/[.04] to-pink-500/[.05] p-6 md:p-9">
+            <div className="absolute -right-20 -top-28 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
 
             <div className="relative">
-              <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[.25em] text-cyan-300">
-                <Sparkles size={15} />
-                Next Generation Exam Intelligence
+              <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-[.3em] text-cyan-300">
+                <Sparkles size={14} />
+                Artificial Intelligence • Exam Intelligence
               </div>
 
-              <h1 className="max-w-3xl text-3xl font-black leading-tight md:text-5xl">
-                Your AI Faculty.
+              <h1 className="text-3xl font-black leading-tight md:text-5xl">
+                Master your exam with
                 <br />
-                <span className="gradient-text">
-                  Your Complete Preparation Core.
+                <span className="gradient">
+                  AI Faculty Intelligence.
                 </span>
               </h1>
 
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-white/55 md:text-base">
-                Ask any JEE or NEET question. Get a direct answer,
-                detailed reasoning, formulas, concepts and exam-focused
-                explanations from one intelligent learning interface.
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-white/45">
+                Ask questions. Upload problems. Speak naturally.
+                Your selected AI faculty explains the answer,
+                method, concept and exam strategy.
               </p>
             </div>
           </section>
 
-          {/* EXAM SWITCH */}
-          <section className="mb-6 grid gap-4 md:grid-cols-[1fr_auto]">
-            <div className="glass neon-border rounded-2xl p-3">
-              <div className="mb-2 px-2 text-[10px] uppercase tracking-[.3em] text-white/35">
-                Examination Core
+          {/* EXAM SELECTOR */}
+          <div className="mb-6 grid gap-4 md:grid-cols-[1fr_280px]">
+            <div className="glass rounded-3xl p-3">
+              <div className="mb-2 px-2 text-[9px] uppercase tracking-[.3em] text-white/30">
+                Select Examination
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                {(["JEE", "NEET"] as Exam[]).map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => changeExam(item)}
-                    className={`glow-button rounded-xl px-5 py-3 text-sm font-black ${
-                      exam === item
-                        ? "bg-gradient-to-r from-cyan-400/20 to-purple-500/20 text-cyan-200 ring-1 ring-cyan-300/40"
-                        : "bg-white/[.025] text-white/40"
-                    }`}
-                  >
-                    {item === "JEE"
-                      ? "JEE CORE"
-                      : "NEET CORE"}
-                  </button>
-                ))}
+                <button
+                  onClick={() => changeExam("JEE")}
+                  className={`rounded-2xl py-4 text-sm font-black transition ${
+                    exam === "JEE"
+                      ? "bg-cyan-400/10 text-cyan-200 ring-1 ring-cyan-300/40"
+                      : "bg-white/[.025] text-white/35"
+                  }`}
+                >
+                  ⚡ JEE CORE
+                </button>
+
+                <button
+                  onClick={() => changeExam("NEET")}
+                  className={`rounded-2xl py-4 text-sm font-black transition ${
+                    exam === "NEET"
+                      ? "bg-pink-400/10 text-pink-200 ring-1 ring-pink-300/40"
+                      : "bg-white/[.025] text-white/35"
+                  }`}
+                >
+                  🧬 NEET CORE
+                </button>
               </div>
             </div>
 
-            <div className="glass neon-border flex items-center gap-3 rounded-2xl px-5 py-4">
-              <div className="rounded-xl bg-purple-500/10 p-2">
-                <Target className="text-purple-300" size={20} />
+            <div className="glass flex items-center gap-3 rounded-3xl p-4">
+              <div className="rounded-2xl bg-purple-500/10 p-3 text-purple-300">
+                <Target size={20} />
               </div>
 
               <div>
-                <div className="text-[10px] uppercase tracking-widest text-white/35">
-                  Target
+                <div className="text-[9px] uppercase tracking-widest text-white/30">
+                  Current Mission
                 </div>
-                <div className="text-sm font-bold">
-                  {exam === "JEE"
-                    ? "Engineering Entrance"
-                    : "Medical Entrance"}
+                <div className="text-sm font-black">
+                  {exam} Preparation
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* AI FACULTY */}
+          <section className="glass mb-6 rounded-3xl p-5 md:p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <BrainCircuit
+                    size={20}
+                    className="text-cyan-300"
+                  />
+
+                  <h2 className="text-lg font-black">
+                    AI FACULTY
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-[10px] uppercase tracking-[.22em] text-white/25">
+                  Choose your virtual master
+                </p>
+              </div>
+
+              <div className="rounded-full border border-cyan-300/15 bg-cyan-300/5 px-3 py-1.5 text-[9px] font-bold text-cyan-200">
+                {faculty.length} FACULTIES ACTIVE
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              {faculty.map((person) => (
+                <button
+                  key={person.name}
+                  onClick={() => {
+                    setSelectedFaculty(person);
+                    setAnswer("");
+                  }}
+                  className={`facultyGlow rounded-3xl border border-white/7 bg-white/[.025] p-4 text-left transition ${
+                    selectedFaculty.name === person.name
+                      ? "facultySelected"
+                      : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400/20 via-purple-500/15 to-pink-500/20 text-sm font-black text-cyan-200">
+                      {person.avatar}
+
+                      <span className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-[#080816] bg-green-400 shadow-[0_0_10px_#4ade80]" />
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-black">
+                        {person.name}
+                      </div>
+
+                      <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-cyan-300/70">
+                        {person.subject}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 text-[10px] leading-5 text-white/30">
+                    {person.specialty}
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between">
+                    <span
+                      className={`text-[9px] font-bold ${
+                        selectedFaculty.name ===
+                        person.name
+                          ? "text-cyan-300"
+                          : "text-white/20"
+                      }`}
+                    >
+                      {selectedFaculty.name ===
+                      person.name
+                        ? "● SELECTED FACULTY"
+                        : "SELECT FACULTY"}
+                    </span>
+
+                    <ChevronRight
+                      size={14}
+                      className="text-white/20"
+                    />
+                  </div>
+                </button>
+              ))}
+            </div>
           </section>
 
-          <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)_280px]">
-            {/* LEFT SUBJECT PANEL */}
-            <aside className="glass neon-border h-fit rounded-3xl p-4">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-[.2em] text-white/45">
-                  Subjects
-                </span>
-                <span className="rounded-full bg-cyan-300/10 px-2 py-1 text-[9px] text-cyan-200">
-                  {subjects.length} ACTIVE
-                </span>
-              </div>
+          {/* MAIN */}
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
 
-              <div className="space-y-2">
-                {subjects.map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => setSubject(item)}
-                    className={`group flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${
-                      subject === item
-                        ? "bg-gradient-to-r from-cyan-400/15 to-purple-500/10 text-cyan-200 ring-1 ring-cyan-300/25"
-                        : "text-white/45 hover:bg-white/[.035]"
-                    }`}
-                  >
-                    <span
-                      className={
-                        subject === item
-                          ? "text-cyan-300"
-                          : "text-white/35"
-                      }
-                    >
-                      {subjectIcon[item]}
-                    </span>
-
-                    <span className="flex-1 text-sm font-semibold">
-                      {item}
-                    </span>
-
-                    {subject === item && (
-                      <ChevronRight
-                        size={15}
-                        className="text-cyan-300"
-                      />
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {exam === "NEET" && (
-                <div className="mt-5 rounded-2xl border border-pink-300/10 bg-pink-400/[.03] p-4">
-                  <div className="text-[10px] uppercase tracking-widest text-pink-300/70">
-                    Biology Core
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    {(["Botany", "Zoology"] as Subject[]).map(
-                      (item) => (
-                        <button
-                          key={item}
-                          onClick={() => setSubject(item)}
-                          className={`rounded-xl border px-2 py-2 text-xs ${
-                            subject === item
-                              ? "border-pink-300/40 bg-pink-300/10 text-pink-200"
-                              : "border-white/5 text-white/35"
-                          }`}
-                        >
-                          {item}
-                        </button>
-                      )
-                    )}
-                  </div>
-                </div>
-              )}
-            </aside>
-
-            {/* MAIN AI */}
-            <section className="min-w-0">
-              <div className="glass neon-border scanline rounded-3xl">
-                {/* AI HEADER */}
-                <div className="flex items-center justify-between border-b border-white/5 p-5">
+            {/* CHAT */}
+            <section className="glass overflow-hidden rounded-3xl">
+              <div className="border-b border-white/5 p-5">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400/20 to-purple-500/20">
+                    <div className="glow flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-300/5">
                       <BrainCircuit
-                        className="text-cyan-300"
                         size={24}
+                        className="text-cyan-300"
                       />
-                      <span className="absolute inset-0 rounded-2xl shadow-[0_0_30px_rgba(0,240,255,.2)]" />
                     </div>
 
                     <div>
-                      <div className="font-bold">
-                        Masterstroke AI Faculty
+                      <div className="font-black">
+                        {selectedFaculty.name}
                       </div>
-                      <div className="text-[11px] text-white/35">
-                        {exam} • {subject} • Direct Answer Mode
+
+                      <div className="text-[10px] text-white/30">
+                        {selectedFaculty.subject} AI Faculty •{" "}
+                        {exam} CORE
                       </div>
                     </div>
                   </div>
 
-                  <div className="hidden items-center gap-2 text-[10px] text-green-300 sm:flex">
-                    <span className="h-2 w-2 rounded-full bg-green-400 shadow-[0_0_10px_#4ade80]" />
-                    READY
+                  <div className="hidden rounded-full bg-cyan-300/5 px-3 py-1.5 text-[9px] text-cyan-300 sm:block">
+                    DIRECT ANSWER MODE
                   </div>
                 </div>
+              </div>
 
-                {/* ANSWER AREA */}
-                <div className="min-h-[420px] p-5 md:p-7">
-                  {!answer && !loading ? (
-                    <div className="flex min-h-[350px] flex-col items-center justify-center text-center">
-                      <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[28px] border border-cyan-300/20 bg-cyan-300/5">
-                        <Sparkles
-                          className="text-cyan-300"
-                          size={34}
-                        />
-                      </div>
-
-                      <h2 className="text-xl font-black">
-                        Ask anything in {subject}
-                      </h2>
-
-                      <p className="mt-2 max-w-md text-sm leading-6 text-white/35">
-                        Type a question, speak it, or upload a
-                        question image. The AI will generate the
-                        answer and explanation.
-                      </p>
-
-                      <div className="mt-7 grid w-full max-w-xl gap-2 sm:grid-cols-2">
-                        {[
-                          "Solve this question step by step",
-                          "Explain this concept simply",
-                          "Give the fastest exam method",
-                          "Create 5 practice questions",
-                        ].map((prompt) => (
-                          <button
-                            key={prompt}
-                            onClick={() => setQuestion(prompt)}
-                            className="rounded-xl border border-white/5 bg-white/[.025] px-4 py-3 text-left text-xs text-white/45 transition hover:border-cyan-300/20 hover:text-cyan-200"
-                          >
-                            {prompt}
-                          </button>
-                        ))}
-                      </div>
+              {/* ANSWER */}
+              <div className="min-h-[390px] p-5 md:p-7">
+                {!answer && !loading ? (
+                  <div className="flex min-h-[330px] flex-col items-center justify-center text-center">
+                    <div className="glow mb-6 flex h-20 w-20 items-center justify-center rounded-[28px] border border-cyan-300/20 bg-cyan-300/5">
+                      <Sparkles
+                        size={34}
+                        className="text-cyan-300"
+                      />
                     </div>
-                  ) : (
-                    <div className="space-y-5">
-                      {loading && (
-                        <div className="rounded-2xl border border-cyan-300/10 bg-cyan-300/[.03] p-5">
-                          <div className="flex items-center gap-3">
-                            <div className="h-3 w-3 animate-pulse rounded-full bg-cyan-300 shadow-[0_0_15px_cyan]" />
-                            <span className="text-sm text-cyan-200">
-                              Masterstroke AI is solving...
-                            </span>
-                          </div>
 
-                          <div className="mt-5 space-y-2">
-                            <div className="h-2 animate-pulse rounded bg-white/5" />
-                            <div className="h-2 w-4/5 animate-pulse rounded bg-white/5" />
-                            <div className="h-2 w-3/5 animate-pulse rounded bg-white/5" />
-                          </div>
-                        </div>
-                      )}
+                    <div className="text-xl font-black">
+                      Ask{" "}
+                      <span className="gradient">
+                        {selectedFaculty.name}
+                      </span>
+                    </div>
 
-                      {answer && (
-                        <div className="rounded-3xl border border-cyan-300/15 bg-gradient-to-br from-cyan-300/[.06] to-purple-500/[.04] p-5 md:p-7">
-                          <div className="mb-5 flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.2em] text-cyan-300">
-                              <Zap size={14} />
-                              AI Solution
+                    <p className="mt-2 max-w-md text-sm leading-6 text-white/30">
+                      Ask a {selectedFaculty.subject} question
+                      and your AI faculty will provide a direct
+                      solution.
+                    </p>
+
+                    <div className="mt-7 flex flex-wrap justify-center gap-2">
+                      {[
+                        "Solve step-by-step",
+                        "Explain the concept",
+                        "Give shortcut method",
+                        "Create practice questions",
+                      ].map((text) => (
+                        <button
+                          key={text}
+                          onClick={() =>
+                            setQuestion(text)
+                          }
+                          className="rounded-xl border border-white/7 bg-white/[.025] px-4 py-2.5 text-[10px] text-white/40 hover:border-cyan-300/20 hover:text-cyan-200"
+                        >
+                          {text}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    {loading && (
+                      <div className="rounded-3xl border border-cyan-300/15 bg-cyan-300/[.03] p-6">
+                        <div className="flex items-center gap-3">
+                          <div className="h-3 w-3 animate-pulse rounded-full bg-cyan-300 shadow-[0_0_15px_cyan]" />
+
+                          <div>
+                            <div className="text-sm font-bold text-cyan-200">
+                              {selectedFaculty.name}
                             </div>
 
-                            <button
-                              onClick={speakAnswer}
-                              className="rounded-xl border border-white/10 p-2 text-white/50 hover:text-cyan-200"
-                              title="Read answer aloud"
-                            >
-                              <Headphones size={17} />
-                            </button>
+                            <div className="text-[10px] text-white/30">
+                              Analysing your {exam} question...
+                            </div>
                           </div>
-
-                          <div className="whitespace-pre-wrap text-sm leading-7 text-white/80">
-                            {answer}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* INPUT */}
-                <div className="border-t border-white/5 p-4 md:p-5">
-                  {image && (
-                    <div className="mb-3 flex items-center gap-3 rounded-2xl border border-cyan-300/15 bg-cyan-300/[.03] p-3">
-                      <img
-                        src={image}
-                        alt="Question preview"
-                        className="h-16 w-16 rounded-xl object-cover"
-                      />
-
-                      <div className="flex-1">
-                        <div className="text-xs font-bold text-cyan-200">
-                          Question image attached
-                        </div>
-                        <div className="text-[10px] text-white/30">
-                          AI will analyze the uploaded question.
                         </div>
                       </div>
+                    )}
 
-                      <button
-                        onClick={() => setImage(null)}
-                        className="rounded-lg p-2 text-white/40 hover:text-white"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  )}
+                    {answer && (
+                      <div className="rounded-3xl border border-cyan-300/15 bg-gradient-to-br from-cyan-300/[.06] via-purple-500/[.04] to-pink-500/[.03] p-6">
+                        <div className="mb-5 flex items-center justify-between">
+                          <div>
+                            <div className="text-[9px] uppercase tracking-[.3em] text-cyan-300">
+                              {selectedFaculty.name}
+                            </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-black/30 p-2 focus-within:border-cyan-300/30">
-                    <textarea
-                      value={question}
-                      onChange={(e) =>
-                        setQuestion(e.target.value)
-                      }
-                      onKeyDown={(e) => {
-                        if (
-                          e.key === "Enter" &&
-                          !e.shiftKey
-                        ) {
-                          e.preventDefault();
-                          askAI();
-                        }
-                      }}
-                      placeholder={`Ask your ${subject} question...`}
-                      rows={3}
-                      className="w-full resize-none bg-transparent px-3 py-2 text-sm text-white outline-none placeholder:text-white/20"
+                            <div className="mt-1 text-xs text-white/35">
+                              {selectedFaculty.subject} • AI Solution
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={speak}
+                            className="rounded-xl border border-white/10 p-2 text-white/40 hover:text-cyan-200"
+                          >
+                            <Headphones size={17} />
+                          </button>
+                        </div>
+
+                        <div className="whitespace-pre-wrap text-sm leading-7 text-white/80">
+                          {answer}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* INPUT */}
+              <div className="border-t border-white/5 p-4">
+                {image && (
+                  <div className="mb-3 flex items-center gap-3 rounded-2xl border border-cyan-300/15 bg-cyan-300/[.03] p-3">
+                    <img
+                      src={image}
+                      alt="Question"
+                      className="h-14 w-14 rounded-xl object-cover"
                     />
 
-                    <div className="flex items-center justify-between px-2 pb-1">
-                      <div className="flex items-center gap-1">
-                        <input
-                          ref={fileRef}
-                          type="file"
-                          accept="image/*"
-                          hidden
-                          onChange={(e) => {
-                            const file =
-                              e.target.files?.[0];
+                    <div className="flex-1 text-xs text-cyan-200">
+                      Question image attached
+                    </div>
 
-                            if (file) handleImage(file);
-                          }}
-                        />
+                    <button
+                      onClick={() => setImage(null)}
+                      className="text-white/40"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
 
-                        <button
-                          onClick={() =>
-                            fileRef.current?.click()
-                          }
-                          className="rounded-xl p-2 text-white/35 hover:bg-white/5 hover:text-cyan-200"
-                          title="Upload question image"
-                        >
-                          <ImagePlus size={18} />
-                        </button>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-2">
+                  <textarea
+                    value={question}
+                    onChange={(e) =>
+                      setQuestion(e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === "Enter" &&
+                        !e.shiftKey
+                      ) {
+                        e.preventDefault();
+                        askAI();
+                      }
+                    }}
+                    placeholder={`Ask ${selectedFaculty.name} a ${selectedFaculty.subject} question...`}
+                    rows={3}
+                    className="w-full resize-none bg-transparent px-3 py-2 text-sm text-white outline-none placeholder:text-white/20"
+                  />
 
-                        <button
-                          onClick={startVoice}
-                          className={`rounded-xl p-2 ${
-                            voiceActive
-                              ? "bg-pink-400/10 text-pink-300"
-                              : "text-white/35 hover:bg-white/5 hover:text-cyan-200"
-                          }`}
-                          title="Voice question"
-                        >
-                          <Mic size={18} />
-                        </button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1">
+                      <input
+                        id="questionImage"
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        onChange={(e) => {
+                          const file =
+                            e.target.files?.[0];
 
-                        <button className="hidden rounded-xl p-2 text-white/35 hover:bg-white/5 sm:block">
-                          <Paperclip size={18} />
-                        </button>
-                      </div>
+                          if (file) uploadImage(file);
+                        }}
+                      />
+
+                      <label
+                        htmlFor="questionImage"
+                        className="cursor-pointer rounded-xl p-2 text-white/35 hover:bg-white/5 hover:text-cyan-200"
+                      >
+                        <ImagePlus size={18} />
+                      </label>
 
                       <button
-                        onClick={askAI}
-                        disabled={
-                          loading ||
-                          (!question.trim() && !image)
-                        }
-                        className="glow-button flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400/20 via-purple-500/20 to-pink-500/20 px-5 py-2.5 text-xs font-black text-cyan-100 ring-1 ring-cyan-300/30 disabled:cursor-not-allowed disabled:opacity-30"
+                        onClick={voiceInput}
+                        className={`rounded-xl p-2 ${
+                          voiceActive
+                            ? "bg-pink-400/10 text-pink-300"
+                            : "text-white/35 hover:text-cyan-200"
+                        }`}
                       >
-                        <Send size={15} />
-                        ASK AI
+                        <Mic size={18} />
+                      </button>
+
+                      <button className="rounded-xl p-2 text-white/35">
+                        <Camera size={18} />
                       </button>
                     </div>
-                  </div>
 
-                  <div className="mt-2 text-center text-[9px] text-white/20">
-                    Enter to send • Shift + Enter for new line
+                    <button
+                      onClick={askAI}
+                      disabled={
+                        loading ||
+                        (!question.trim() && !image)
+                      }
+                      className="glow flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400/20 via-purple-500/20 to-pink-500/20 px-5 py-3 text-[10px] font-black text-cyan-100 ring-1 ring-cyan-300/30 disabled:opacity-30"
+                    >
+                      <Send size={15} />
+                      ASK FACULTY
+                    </button>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* RIGHT PANEL */}
+            {/* RIGHT DASHBOARD */}
             <aside className="space-y-5">
-              <div className="glass neon-border rounded-3xl p-5">
-                <div className="mb-4 flex items-center gap-2">
+
+              <div className="glass rounded-3xl p-5">
+                <div className="mb-5 flex items-center gap-2">
                   <Trophy
-                    className="text-yellow-300"
                     size={18}
+                    className="text-yellow-300"
                   />
-                  <span className="text-xs font-black uppercase tracking-[.2em]">
+                  <span className="text-xs font-black uppercase tracking-widest">
                     Student Core
                   </span>
                 </div>
 
-                <div className="mb-4 flex items-end justify-between">
+                <div className="flex items-end justify-between">
                   <div>
-                    <div className="text-3xl font-black">
+                    <div className="text-4xl font-black gradient">
                       72%
                     </div>
-                    <div className="text-[10px] uppercase tracking-widest text-white/30">
+                    <div className="mt-1 text-[9px] uppercase tracking-widest text-white/25">
                       Preparation
                     </div>
                   </div>
 
-                  <div className="text-right text-xs text-cyan-300">
-                    +8%
-                    <div className="text-[9px] text-white/25">
-                      this week
+                  <div className="text-right">
+                    <div className="text-xs text-green-300">
+                      +8%
+                    </div>
+                    <div className="text-[9px] text-white/20">
+                      weekly
                     </div>
                   </div>
                 </div>
 
-                <div className="h-2 overflow-hidden rounded-full bg-white/5">
-                  <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 shadow-[0_0_15px_rgba(0,240,255,.35)]" />
+                <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/5">
+                  <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500" />
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-2">
-                  <Stat
-                    icon={<Clock3 size={15} />}
+                  <MiniStat
+                    icon={<Clock3 size={14} />}
                     value="18h"
                     label="Study"
                   />
-                  <Stat
-                    icon={<Target size={15} />}
+
+                  <MiniStat
+                    icon={<Target size={14} />}
                     value="84%"
                     label="Accuracy"
                   />
-                  <Stat
-                    icon={<MessageCircle size={15} />}
+
+                  <MiniStat
+                    icon={<MessageCircleIcon />}
                     value="126"
                     label="Solved"
                   />
-                  <Stat
-                    icon={<Trophy size={15} />}
+
+                  <MiniStat
+                    icon={<Trophy size={14} />}
                     value="14"
                     label="Streak"
                   />
                 </div>
               </div>
 
-              <div className="glass neon-border rounded-3xl p-5">
-                <div className="mb-4 flex items-center gap-2">
-                  <Play
-                    className="text-purple-300"
-                    size={17}
-                  />
-                  <span className="text-xs font-black uppercase tracking-[.2em]">
-                    Quick Launch
-                  </span>
+              <div className="glass rounded-3xl p-5">
+                <div className="mb-4 text-xs font-black uppercase tracking-widest">
+                  Mission Control
                 </div>
 
-                <div className="space-y-2">
-                  <QuickAction
-                    icon={<Target size={17} />}
-                    title="CBT Simulator"
-                    subtitle="Timed exam"
-                  />
+                <Quick
+                  icon={<Target size={17} />}
+                  title="CBT Simulator"
+                  text="Timed exam mode"
+                />
 
-                  <QuickAction
-                    icon={<BookOpen size={17} />}
-                    title="Revision Vault"
-                    subtitle="Notes & PDFs"
-                  />
+                <Quick
+                  icon={<BookOpen size={17} />}
+                  title="Edu-Vault"
+                  text="Notes & PDFs"
+                />
 
-                  <QuickAction
-                    icon={<Headphones size={17} />}
-                    title="Audio Revision"
-                    subtitle="Learn on the go"
-                  />
+                <Quick
+                  icon={<Headphones size={17} />}
+                  title="Audio Revise"
+                  text="Quick revision"
+                />
 
-                  <QuickAction
-                    icon={<Camera size={17} />}
-                    title="Scan Question"
-                    subtitle="Image → solution"
-                  />
-                </div>
+                <Quick
+                  icon={<Camera size={17} />}
+                  title="Question Scanner"
+                  text="Image → solution"
+                />
               </div>
 
-              <div className="rounded-3xl border border-pink-300/10 bg-gradient-to-br from-pink-500/[.07] to-purple-500/[.04] p-5">
-                <div className="text-[10px] font-bold uppercase tracking-[.25em] text-pink-300">
-                  Masterstroke Premium
+              <div className="rounded-3xl border border-purple-400/15 bg-gradient-to-br from-purple-500/[.09] to-pink-500/[.04] p-5">
+                <div className="text-[9px] font-bold uppercase tracking-[.3em] text-purple-300">
+                  PREMIUM AI CORE
                 </div>
 
                 <div className="mt-2 text-lg font-black">
-                  Unlock the complete AI Core
+                  Your preparation,
+                  <br />
+                  upgraded.
                 </div>
 
-                <div className="mt-2 text-xs leading-5 text-white/35">
-                  Unlimited AI questions, advanced practice,
-                  analytics and exam simulations.
-                </div>
+                <p className="mt-2 text-xs leading-5 text-white/30">
+                  Advanced AI solving, unlimited practice,
+                  analytics and exam simulation.
+                </p>
 
-                <button className="glow-button mt-4 w-full rounded-xl bg-gradient-to-r from-cyan-400/20 to-purple-500/20 py-3 text-xs font-black text-cyan-100 ring-1 ring-cyan-300/20">
+                <button className="mt-4 w-full rounded-xl bg-gradient-to-r from-cyan-400/20 to-purple-500/20 py-3 text-[10px] font-black text-cyan-100 ring-1 ring-cyan-300/20">
                   EXPLORE PREMIUM
                 </button>
               </div>
@@ -841,7 +863,7 @@ export default function MasterstrokeV2() {
   );
 }
 
-function Stat({
+function MiniStat({
   icon,
   value,
   label,
@@ -852,27 +874,29 @@ function Stat({
 }) {
   return (
     <div className="rounded-2xl border border-white/5 bg-white/[.025] p-3">
-      <div className="mb-2 text-white/35">{icon}</div>
-      <div className="text-sm font-black">{value}</div>
-      <div className="text-[9px] uppercase tracking-widest text-white/25">
+      <div className="text-white/30">{icon}</div>
+      <div className="mt-2 text-sm font-black">
+        {value}
+      </div>
+      <div className="text-[8px] uppercase tracking-widest text-white/20">
         {label}
       </div>
     </div>
   );
 }
 
-function QuickAction({
+function Quick({
   icon,
   title,
-  subtitle,
+  text,
 }: {
   icon: React.ReactNode;
   title: string;
-  subtitle: string;
+  text: string;
 }) {
   return (
-    <button className="flex w-full items-center gap-3 rounded-2xl border border-white/5 bg-white/[.02] p-3 text-left transition hover:border-cyan-300/20 hover:bg-cyan-300/[.03]">
-      <div className="rounded-xl bg-purple-500/10 p-2 text-purple-300">
+    <button className="mb-2 flex w-full items-center gap-3 rounded-2xl border border-white/5 bg-white/[.02] p-3 text-left hover:border-cyan-300/20">
+      <div className="rounded-xl bg-purple-400/10 p-2 text-purple-300">
         {icon}
       </div>
 
@@ -880,15 +904,23 @@ function QuickAction({
         <div className="text-xs font-bold">
           {title}
         </div>
-        <div className="text-[9px] text-white/25">
-          {subtitle}
+        <div className="text-[9px] text-white/20">
+          {text}
         </div>
       </div>
 
       <ChevronRight
         size={14}
-        className="text-white/20"
+        className="text-white/15"
       />
     </button>
+  );
+}
+
+function MessageCircleIcon() {
+  return (
+    <div className="text-[14px]">
+      💬
+    </div>
   );
 }
